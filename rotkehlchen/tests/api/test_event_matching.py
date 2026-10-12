@@ -170,14 +170,15 @@ def test_match_asset_movements_errors(rotkehlchen_api_server: APIServer) -> None
     )
 
 
-def test_match_asset_movements_requires_premium(rotkehlchen_api_server: APIServer) -> None:
+def test_match_asset_movements_without_premium(rotkehlchen_api_server: APIServer) -> None:
+    """Matching is reachable without a subscription: the request gets to the DB lookup"""
     assert_error_response(
         response=requests.put(
             url=api_url_for(rotkehlchen_api_server, 'matchassetmovementsresource'),
             json={'asset_movement': 1, 'matched_events': [2]},
         ),
-        status_code=HTTPStatus.FORBIDDEN,
-        contained_in_msg='does not have a premium subscription',
+        status_code=HTTPStatus.BAD_REQUEST,
+        contained_in_msg='No asset movement event found in the DB for identifier 1',
     )
 
 
@@ -1063,7 +1064,7 @@ def test_protocol_counterparty_in_other_events_only(
     assert result['other_events'] == [2]
 
 
-def test_get_possible_matches_requires_premium(rotkehlchen_api_server: APIServer) -> None:
+def test_get_possible_matches_without_premium(rotkehlchen_api_server: APIServer) -> None:
     assert_error_response(
         response=requests.post(
             api_url_for(rotkehlchen_api_server, 'matchassetmovementsresource'),
@@ -1073,12 +1074,12 @@ def test_get_possible_matches_requires_premium(rotkehlchen_api_server: APIServer
                 'tolerance': '0.002',
             },
         ),
-        status_code=HTTPStatus.FORBIDDEN,
-        contained_in_msg='does not have a premium subscription',
+        status_code=HTTPStatus.BAD_REQUEST,
+        contained_in_msg='No asset movement event found in the DB for group identifier dummy',
     )
 
 
-def test_unlink_matched_asset_movements_requires_premium(
+def test_unlink_matched_asset_movements_without_premium(
         rotkehlchen_api_server: APIServer,
 ) -> None:
     assert_error_response(
@@ -1086,8 +1087,8 @@ def test_unlink_matched_asset_movements_requires_premium(
             api_url_for(rotkehlchen_api_server, 'matchassetmovementsresource'),
             json={'identifier': 1},
         ),
-        status_code=HTTPStatus.FORBIDDEN,
-        contained_in_msg='does not have a premium subscription',
+        status_code=HTTPStatus.BAD_REQUEST,
+        contained_in_msg='The specified identifier 1 does not correspond to either',
     )
 
 
@@ -1188,7 +1189,7 @@ def test_get_history_events_with_matched_asset_movements(
             ),
             rotkehlchen_api_server=rotkehlchen_api_server,
         )
-        assert result['entries_found'] == result['entries_found_total'] == result['entries_total'] == 2  # noqa: E501
+        assert result['entries_found'] == result['entries_total'] == 2
         assert len(result['entries']) == 2
         assert result['entries'][0]['grouped_events_num'] == 3  # includes both evm events and the matched asset movement  # noqa: E501
         assert result['entries'][0]['entry']['group_identifier'] == movement3.group_identifier

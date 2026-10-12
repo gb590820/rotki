@@ -1074,6 +1074,15 @@ def get_user_limit(
     return UNLIMITED, True
 
 
+def to_db_limit(limit: int) -> int | None:
+    """Translate a user limit to the DB layer's, which spells "no limit" as None.
+
+    Passing UNLIMITED (-1) down instead would still return every row, but through
+    the slower windowed `LIMIT ?` query meant for capped results.
+    """
+    return None if limit == UNLIMITED else limit
+
+
 def has_premium_capability(
         premium: Premium | None,  # pylint: disable=unused-argument
         capability_name: str,  # pylint: disable=unused-argument
