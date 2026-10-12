@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import type { SystemVersion } from '@shared/ipc';
 import type { WebVersion } from '@/types';
-import { millisecondsToSeconds } from '@/modules/core/common/data/date';
 import { useMainStore } from '@/modules/core/common/use-main-store';
-import { useSubscription } from '@/modules/premium/use-subscription';
 import { useInterop } from '@/modules/shell/app/use-electron-interop';
 import AboutDataDirectory from '@/modules/shell/components/AboutDataDirectory.vue';
 import AppUpdateIndicator from '@/modules/shell/components/AppUpdateIndicator.vue';
-import DateDisplay from '@/modules/shell/components/display/DateDisplay.vue';
 import ExternalLink from '@/modules/shell/components/ExternalLink.vue';
 import RotkiLogo from '@/modules/shell/components/RotkiLogo.vue';
 import { isWebVersion, useVersionText } from '@/modules/shell/components/use-version-text';
@@ -18,21 +15,6 @@ const { t } = useI18n({ useScope: 'global' });
 
 const { dataDirectory, version } = toRefs(store);
 const versionInfo = asyncComputed<SystemVersion | WebVersion>(() => getVersion());
-
-const subscribed = useSubscription();
-const componentsVersion = computed(() => {
-  if (!get(subscribed))
-    return null;
-
-  const cmp = window.PremiumComponents;
-  if (!cmp)
-    return null;
-
-  return {
-    build: cmp.build,
-    version: cmp.version,
-  };
-});
 
 const webVersion = computed<WebVersion | null>(() => {
   const info = get(versionInfo);
@@ -48,7 +30,6 @@ const frontendVersion = __APP_VERSION__;
 
 const versionText = useVersionText(() => ({
   appVersion: get(version).version,
-  components: get(componentsVersion) ?? undefined,
   frontendVersion,
   system: get(versionInfo) ?? undefined,
 }));
@@ -141,37 +122,6 @@ const { copy } = useClipboard({ source: versionText });
               </td>
               <td class="text-rui-text-secondary">
                 {{ electronVersion.electron }}
-              </td>
-            </tr>
-          </template>
-          <template v-if="componentsVersion">
-            <tr>
-              <td colspan="2">
-                <div class="border-t border-default mt-4 pt-4 font-bold mb-2">
-                  {{ t('about.components.title') }}
-                </div>
-              </td>
-            </tr>
-            <tr
-              v-if="componentsVersion.version"
-              data-testid="about-components-version"
-            >
-              <td class="font-medium py-0.5 min-w-[150px]">
-                {{ t('about.components.version') }}
-              </td>
-              <td class="text-rui-text-secondary">
-                {{ componentsVersion.version }}
-              </td>
-            </tr>
-            <tr
-              v-if="componentsVersion.build"
-              data-testid="about-components-build"
-            >
-              <td class="font-medium py-0.5 min-w-[150px]">
-                {{ t('about.components.build') }}
-              </td>
-              <td class="text-rui-text-secondary">
-                <DateDisplay :timestamp="millisecondsToSeconds(componentsVersion.build)" />
               </td>
             </tr>
           </template>

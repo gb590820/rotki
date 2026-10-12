@@ -1,11 +1,6 @@
 {
   "about": {
     "app_version": "App Version:",
-    "components": {
-      "build": "Build:",
-      "title": "Premium Components",
-      "version": "Premium Version:"
-    },
     "copy_data_directory_tooltip": "Copy data directory",
     "copy_information_tooltip": "Copy the application information",
     "data_directory": "Data Directory:",
@@ -5427,12 +5422,6 @@
       }
     },
     "title": "Premium Devices"
-  },
-  "premium_loading_failed": {
-    "description": "This might indicate a problem with the premium component service.",
-    "open_issue": "If the problem persists open an issue in our issue tracker.",
-    "title": "There was an error loading the component.",
-    "try_again": "Please try again later."
   },
   "premium_lock": {
     "tooltip": "Available with a rotki Premium plan"

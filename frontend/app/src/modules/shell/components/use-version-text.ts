@@ -2,20 +2,12 @@ import type { SystemVersion } from '@shared/ipc';
 import type { ComputedRef, MaybeRefOrGetter } from 'vue';
 import type { WebVersion } from '@/types';
 
-/** The premium components the app loaded, absent for a non-premium user. */
-interface ComponentsVersion {
-  readonly version: string;
-  /** The build timestamp in milliseconds, which the about screen renders as a date. */
-  readonly build: number;
-}
-
 /** Everything the about screen knows about what is running. */
 export interface VersionSummary {
   readonly appVersion: string;
   readonly frontendVersion: string;
   /** What the app is running on, absent until the interop call comes back. */
   readonly system?: SystemVersion | WebVersion;
-  readonly components?: ComponentsVersion;
 }
 
 /**
@@ -38,8 +30,7 @@ export function isWebVersion(system: SystemVersion | WebVersion): system is WebV
  *
  * @remarks
  * Lines end in CRLF so the block survives being pasted into a windows editor. Only the platform
- * the app is actually running on contributes lines, and the premium components only appear when
- * they were loaded.
+ * the app is actually running on contributes lines.
  *
  * @param summary - what is running
  * @returns the text to copy
@@ -48,7 +39,7 @@ export function useVersionText(summary: MaybeRefOrGetter<VersionSummary>): Compu
   const { t } = useI18n({ useScope: 'global' });
 
   return computed<string>(() => {
-    const { appVersion, components, frontendVersion, system } = toValue(summary);
+    const { appVersion, frontendVersion, system } = toValue(summary);
     const lines = [
       `${t('about.app_version')} ${appVersion}`,
       `${t('about.frontend_version')} ${frontendVersion}`,
@@ -65,9 +56,6 @@ export function useVersionText(summary: MaybeRefOrGetter<VersionSummary>): Compu
         );
       }
     }
-
-    if (components)
-      lines.push(`${t('about.components.version')} ${components.version}`, `${t('about.components.build')} ${components.build}`);
 
     return `${lines.join('\r\n')}\r\n`;
   });

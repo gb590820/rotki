@@ -1,11 +1,6 @@
 {
   "about": {
     "app_version": "Version de l'appli :",
-    "components": {
-      "build": "Build :",
-      "title": "Composants Premium",
-      "version": "Version Premium :"
-    },
     "copy_data_directory_tooltip": "Copier le répertoire de données",
     "copy_information_tooltip": "Copier les informations de l'application",
     "data_directory": "Répertoire de données :",
@@ -2316,12 +2311,6 @@
       "non_empty_key": "La clé API ne peut pas être vide",
       "non_empty_secret": "Le secret API ne peut pas être vide"
     }
-  },
-  "premium_loading_failed": {
-    "description": "Cela peut indiquer un problème avec le service de composants premium.",
-    "open_issue": "Si le problème persiste, ouvrez une demande d'assistance dans notre outil de suivi des problèmes.",
-    "title": "Erreur de chargement du composant.",
-    "try_again": "Veuillez réessayer plus tard."
   },
   "premium_lock": {
     "tooltip": "Cette fonctionnalité n'est disponible qu'avec un abonnement premium"
