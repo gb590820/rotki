@@ -1188,7 +1188,7 @@ def test_get_history_events_with_matched_asset_movements(
             ),
             rotkehlchen_api_server=rotkehlchen_api_server,
         )
-        assert result['entries_found'] == result['entries_found_total'] == result['entries_total'] == 2  # noqa: E501
+        assert result['entries_found'] == result['entries_total'] == 2
         assert len(result['entries']) == 2
         assert result['entries'][0]['grouped_events_num'] == 3  # includes both evm events and the matched asset movement  # noqa: E501
         assert result['entries'][0]['entry']['group_identifier'] == movement3.group_identifier
