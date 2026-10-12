@@ -3,7 +3,7 @@ import { FetchError, ofetch } from 'ofetch';
 import { camelCaseTransformer } from '@/modules/core/api/transformers';
 import { logger } from '@/modules/core/common/logging/logging';
 import { DashboardSchema, type VisibilityPeriod, WelcomeSchema } from '@/modules/core/messaging/dynamic-messages';
-import { usePremium } from '@/modules/premium/use-premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 
 export const serializer = {
   read: (v: any): any => (v ? JSON.parse(v) : null),
@@ -19,7 +19,7 @@ export const useDynamicMessages = createSharedComposable(() => {
     serializer,
   });
 
-  const premium = usePremium();
+  const subscribed = useSubscription();
 
   const welcomeHeader = computed(() => {
     if (!isDefined(welcomeMessages))
@@ -61,7 +61,7 @@ export const useDynamicMessages = createSharedComposable(() => {
     if (!isDefined(dashboardMessages))
       return [];
 
-    const isPremium = get(premium);
+    const isPremium = get(subscribed);
     const validMessages = getValidMessages(get(dashboardMessages));
 
     return validMessages.filter((message) => {

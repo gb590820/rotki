@@ -9,7 +9,7 @@ const { currentTier, premium } = await vi.hoisted(async () => {
   return { currentTier: ref<string>('Free'), premium: ref<boolean>(false) };
 });
 
-vi.mock('@/modules/premium/use-premium', () => ({ usePremium: (): typeof premium => premium }));
+vi.mock('@/modules/premium/use-subscription', () => ({ useSubscription: (): typeof premium => premium }));
 vi.mock('@/modules/premium/use-premium-helper', () => ({
   usePremiumHelper: (): Record<string, unknown> => ({ currentTier }),
 }));

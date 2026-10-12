@@ -3,7 +3,7 @@ import type { PremiumStatusUpdateData } from '../types/shared-types';
 import { NotificationCategory, Priority, Severity } from '@rotki/common';
 import { createStateWithNotificationHandler } from '@/modules/core/messaging/utils';
 import { readPremiumStatus } from '@/modules/premium/core/premium-status';
-import { usePremium } from '@/modules/premium/use-premium';
+import { usePremiumStore } from '@/modules/premium/use-premium-store';
 import { RaisedConditionKind, useRaisedConditionsStore } from '@/modules/shell/action-center/use-raised-conditions-store';
 
 /**
@@ -17,7 +17,7 @@ import { RaisedConditionKind, useRaisedConditionsStore } from '@/modules/shell/a
  * nothing.
  */
 export function createPremiumStatusHandler(t: ReturnType<typeof useI18n>['t']): MessageHandler<PremiumStatusUpdateData> {
-  const premium = usePremium();
+  const { premium } = storeToRefs(usePremiumStore());
   const { clear, raise } = useRaisedConditionsStore();
 
   return createStateWithNotificationHandler<PremiumStatusUpdateData, boolean>(

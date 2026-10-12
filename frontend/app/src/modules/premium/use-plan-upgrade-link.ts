@@ -1,6 +1,6 @@
 import type { ComputedRef } from 'vue';
 import { externalLinks } from '@shared/external-links';
-import { usePremium } from '@/modules/premium/use-premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 
 interface UsePlanUpgradeLinkReturn {
   /** The link label, the same for every plan so prompts can open a sentence with it. */
@@ -11,11 +11,11 @@ interface UsePlanUpgradeLinkReturn {
 
 export function usePlanUpgradeLink(): UsePlanUpgradeLinkReturn {
   const { t } = useI18n({ useScope: 'global' });
-  const premium = usePremium();
+  const subscribed = useSubscription();
 
   const upgradeText = computed<string>(() => t('plan_limit.upgrade'));
 
-  const upgradeUrl = computed<string | undefined>(() => (get(premium) ? externalLinks.manageSubscriptions : undefined));
+  const upgradeUrl = computed<string | undefined>(() => (get(subscribed) ? externalLinks.manageSubscriptions : undefined));
 
   return {
     upgradeText,

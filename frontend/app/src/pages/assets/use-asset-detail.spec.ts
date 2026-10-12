@@ -52,9 +52,9 @@ vi.mock('@/modules/balances/use-aggregated-balances', async () => {
   };
 });
 
-vi.mock('@/modules/premium/use-premium', async () => {
+vi.mock('@/modules/premium/use-subscription', async () => {
   const { shallowRef } = await import('vue');
-  return { usePremium: (): Ref<boolean> => shallowRef(false) };
+  return { useSubscription: (): Ref<boolean> => shallowRef(false) };
 });
 
 vi.mock('@/pages/assets/use-asset-page-actions', async () => {

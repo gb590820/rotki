@@ -3,7 +3,7 @@ import type { ComputedRef, DeepReadonly, MaybeRefOrGetter, Ref } from 'vue';
 import { startPromise } from '@shared/utils';
 import { type AssetResolutionOptions, useAssetInfoRetrieval } from '@/modules/assets/use-asset-info-retrieval';
 import { useAggregatedBalances } from '@/modules/balances/use-aggregated-balances';
-import { usePremium } from '@/modules/premium/use-premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 import { useAssetPageActions } from '@/pages/assets/use-asset-page-actions';
 
 /**
@@ -28,7 +28,8 @@ interface UseAssetDetailReturn {
   loadingIgnore: DeepReadonly<Ref<boolean>>;
   loadingSpam: DeepReadonly<Ref<boolean>>;
   loadingWhitelist: DeepReadonly<Ref<boolean>>;
-  premium: Ref<boolean>;
+  /** Gates the value-over-time chart, which still comes from the remote premium bundle */
+  subscribed: Readonly<Ref<boolean>>;
   toggleIgnoreAsset: () => Promise<void>;
   toggleSpam: () => Promise<void>;
   toggleWhitelistAsset: () => Promise<void>;
@@ -39,7 +40,7 @@ export function useAssetDetail(identifier: MaybeRefOrGetter<string>): UseAssetDe
   const route = useRoute();
 
   const { refetchAssetInfo, useAssetContractInfo, useAssetInfo } = useAssetInfoRetrieval();
-  const premium = usePremium();
+  const subscribed = useSubscription();
   const { useBalances } = useAggregatedBalances();
 
   const aggregatedBalances = useBalances();
@@ -125,7 +126,7 @@ export function useAssetDetail(identifier: MaybeRefOrGetter<string>): UseAssetDe
     loadingIgnore,
     loadingSpam,
     loadingWhitelist,
-    premium,
+    subscribed,
     toggleIgnoreAsset,
     toggleSpam,
     toggleWhitelistAsset,

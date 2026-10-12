@@ -3,7 +3,7 @@ import type { SystemVersion } from '@shared/ipc';
 import type { WebVersion } from '@/types';
 import { millisecondsToSeconds } from '@/modules/core/common/data/date';
 import { useMainStore } from '@/modules/core/common/use-main-store';
-import { usePremium } from '@/modules/premium/use-premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 import { useInterop } from '@/modules/shell/app/use-electron-interop';
 import AboutDataDirectory from '@/modules/shell/components/AboutDataDirectory.vue';
 import AppUpdateIndicator from '@/modules/shell/components/AppUpdateIndicator.vue';
@@ -19,9 +19,9 @@ const { t } = useI18n({ useScope: 'global' });
 const { dataDirectory, version } = toRefs(store);
 const versionInfo = asyncComputed<SystemVersion | WebVersion>(() => getVersion());
 
-const premium = usePremium();
+const subscribed = useSubscription();
 const componentsVersion = computed(() => {
-  if (!get(premium))
+  if (!get(subscribed))
     return null;
 
   const cmp = window.PremiumComponents;

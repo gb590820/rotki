@@ -34,11 +34,13 @@ describe('modules/premium/use-feature-access', () => {
   });
 
   describe('useFeatureAccess', () => {
-    it('should return allowed=false when user is not premium', () => {
-      const { allowed, premium } = useFeatureAccess(PremiumFeature.ETH_STAKING_VIEW);
-
-      expect(get(premium)).toBe(false);
-      expect(get(allowed)).toBe(false);
+    it('should allow every local feature without a subscription or capabilities', () => {
+      const localFeatures = Object.values(PremiumFeature).filter(feature => feature !== PremiumFeature.CLOUD_BACKUP);
+      for (const feature of localFeatures) {
+        const { allowed, premium } = useFeatureAccess(feature);
+        expect(get(premium), feature).toBe(true);
+        expect(get(allowed), feature).toBe(true);
+      }
     });
 
     it('should return allowed=true when user is premium and feature is enabled', () => {
@@ -54,17 +56,16 @@ describe('modules/premium/use-feature-access', () => {
       expect(get(allowed)).toBe(true);
     });
 
-    it('should return allowed=false when user is premium but feature is disabled', () => {
+    it('should allow a local feature even when the capabilities report it disabled', () => {
       const store = usePremiumStore();
-      const { capabilities, premium } = storeToRefs(store);
-      set(premium, true);
+      const { capabilities } = storeToRefs(store);
       set(capabilities, {
         ethStakingView: cap(false, 'Advanced'),
       });
 
       const { allowed } = useFeatureAccess(PremiumFeature.ETH_STAKING_VIEW);
 
-      expect(get(allowed)).toBe(false);
+      expect(get(allowed)).toBe(true);
     });
 
     it('should return correct minimumTier from capabilities', () => {
@@ -109,17 +110,15 @@ describe('modules/premium/use-feature-access', () => {
       expect(get(currentTier)).toBe('Free');
     });
 
-    it('should reactively update when capabilities change', async () => {
+    it('should reactively update the minimum tier when capabilities change', async () => {
       const store = usePremiumStore();
-      const { capabilities, premium } = storeToRefs(store);
-      set(premium, true);
+      const { capabilities } = storeToRefs(store);
       set(capabilities, {
         ethStakingView: cap(false, 'Lite'),
       });
 
-      const { allowed, minimumTier } = useFeatureAccess(PremiumFeature.ETH_STAKING_VIEW);
+      const { minimumTier } = useFeatureAccess(PremiumFeature.ETH_STAKING_VIEW);
 
-      expect(get(allowed)).toBe(false);
       expect(get(minimumTier)).toBe('Lite');
 
       set(capabilities, {
@@ -128,19 +127,18 @@ describe('modules/premium/use-feature-access', () => {
 
       await nextTick();
 
-      expect(get(allowed)).toBe(true);
       expect(get(minimumTier)).toBe('Advanced');
     });
 
-    it('should reactively update when premium status changes', async () => {
+    it('should reactively lock CLOUD_BACKUP when the subscription ends', async () => {
       const store = usePremiumStore();
       const { capabilities, premium } = storeToRefs(store);
       set(premium, true);
       set(capabilities, {
-        ethStakingView: cap(true),
+        maxBackupSizeMb: 100,
       });
 
-      const { allowed } = useFeatureAccess(PremiumFeature.ETH_STAKING_VIEW);
+      const { allowed } = useFeatureAccess(PremiumFeature.CLOUD_BACKUP);
 
       expect(get(allowed)).toBe(true);
 
@@ -161,6 +159,18 @@ describe('modules/premium/use-feature-access', () => {
       const { allowed } = useFeatureAccess(PremiumFeature.CLOUD_BACKUP);
 
       expect(get(allowed)).toBe(true);
+    });
+
+    it('should return allowed=false for CLOUD_BACKUP without a subscription', () => {
+      const store = usePremiumStore();
+      const { capabilities } = storeToRefs(store);
+      set(capabilities, {
+        maxBackupSizeMb: 100,
+      });
+
+      const { allowed } = useFeatureAccess(PremiumFeature.CLOUD_BACKUP);
+
+      expect(get(allowed)).toBe(false);
     });
 
     it('should return allowed=false for CLOUD_BACKUP when maxBackupSizeMb is 0', () => {
@@ -215,53 +225,19 @@ describe('modules/premium/use-feature-access', () => {
       expect(get(minimumTier)).toBe('Basic');
     });
 
-    it('should return allowed=false for MCP when the capability is disabled', () => {
-      const store = usePremiumStore();
-      const { capabilities, premium } = storeToRefs(store);
-      set(premium, true);
-      set(capabilities, {
-        currentTier: 'Supporter',
-        mcp: cap(false, 'Basic'),
-      });
-
+    it('should return allowed=true for MCP without a subscription or capabilities', () => {
       const { allowed, minimumTier } = useFeatureAccess(PremiumFeature.MCP);
 
-      expect(get(allowed)).toBe(false);
-      expect(get(minimumTier)).toBe('Basic');
-    });
-
-    it('should return allowed=false for MCP when user is not premium', () => {
-      const store = usePremiumStore();
-      const { capabilities, premium } = storeToRefs(store);
-      set(premium, false);
-      set(capabilities, {
-        currentTier: 'Basic',
-        mcp: cap(true, 'Basic'),
-      });
-
-      const { allowed } = useFeatureAccess(PremiumFeature.MCP);
-
-      expect(get(allowed)).toBe(false);
-    });
-
-    it('should return allowed=false for MCP when capabilities are not loaded', () => {
-      const store = usePremiumStore();
-      const { premium } = storeToRefs(store);
-      set(premium, true);
-
-      const { allowed, minimumTier } = useFeatureAccess(PremiumFeature.MCP);
-
-      expect(get(allowed)).toBe(false);
+      expect(get(allowed)).toBe(true);
       expect(get(minimumTier)).toBeNull();
     });
 
     it('should work with reactive feature parameter', async () => {
       const store = usePremiumStore();
-      const { capabilities, premium } = storeToRefs(store);
-      set(premium, true);
+      const { capabilities } = storeToRefs(store);
       set(capabilities, {
         ethStakingView: cap(true, 'Lite'),
-        graphsView: cap(false, 'Advanced'),
+        maxBackupSizeMb: 100,
       });
 
       const feature = ref<PremiumFeature>(PremiumFeature.ETH_STAKING_VIEW);
@@ -270,11 +246,11 @@ describe('modules/premium/use-feature-access', () => {
       expect(get(allowed)).toBe(true);
       expect(get(minimumTier)).toBe('Lite');
 
-      set(feature, PremiumFeature.GRAPHS_VIEW);
+      set(feature, PremiumFeature.CLOUD_BACKUP);
       await nextTick();
 
       expect(get(allowed)).toBe(false);
-      expect(get(minimumTier)).toBe('Advanced');
+      expect(get(minimumTier)).toBeNull();
     });
   });
 
@@ -318,11 +294,11 @@ describe('modules/premium/use-feature-access', () => {
       const { allowed: graphsAllowed } = useFeatureAccess(PremiumFeature.GRAPHS_VIEW);
 
       expect(get(ethStakingAllowed)).toBe(true);
-      expect(get(eventAnalysisAllowed)).toBe(false);
-      expect(get(graphsAllowed)).toBe(false);
+      expect(get(eventAnalysisAllowed)).toBe(true);
+      expect(get(graphsAllowed)).toBe(true);
     });
 
-    it('should handle all capabilities set to false', async () => {
+    it('should keep local features allowed when every capability is set to false', async () => {
       const allFalseCapabilities: PremiumCapabilities = {
         [PremiumFeature.ASSET_MOVEMENT_MATCHING]: cap(false),
         [PremiumFeature.ETH_STAKING_VIEW]: cap(false),
@@ -345,9 +321,9 @@ describe('modules/premium/use-feature-access', () => {
       const { allowed: graphsAllowed } = useFeatureAccess(PremiumFeature.GRAPHS_VIEW);
       const { allowed: eventAnalysisAllowed } = useFeatureAccess(PremiumFeature.EVENT_ANALYSIS_VIEW);
 
-      expect(get(ethStakingAllowed)).toBe(false);
-      expect(get(graphsAllowed)).toBe(false);
-      expect(get(eventAnalysisAllowed)).toBe(false);
+      expect(get(ethStakingAllowed)).toBe(true);
+      expect(get(graphsAllowed)).toBe(true);
+      expect(get(eventAnalysisAllowed)).toBe(true);
     });
 
     it('should handle API error gracefully', async () => {
@@ -412,16 +388,16 @@ describe('modules/premium/use-feature-access', () => {
       const { allowed: graphsAllowed } = useFeatureAccess(PremiumFeature.GRAPHS_VIEW);
       const { allowed: eventAnalysisAllowed } = useFeatureAccess(PremiumFeature.EVENT_ANALYSIS_VIEW);
 
-      expect(get(ethStakingAllowed)).toBe(false);
-      expect(get(graphsAllowed)).toBe(false);
-      expect(get(eventAnalysisAllowed)).toBe(false);
+      expect(get(ethStakingAllowed)).toBe(true);
+      expect(get(graphsAllowed)).toBe(true);
+      expect(get(eventAnalysisAllowed)).toBe(true);
 
       set(premium, true);
       await fetchCapabilities();
 
       expect(get(ethStakingAllowed)).toBe(true);
       expect(get(graphsAllowed)).toBe(true);
-      expect(get(eventAnalysisAllowed)).toBe(false);
+      expect(get(eventAnalysisAllowed)).toBe(true);
     });
 
     it('should parse the mcp capability from the backend payload', async () => {
@@ -438,7 +414,7 @@ describe('modules/premium/use-feature-access', () => {
 
       const { allowed, minimumTier } = useFeatureAccess(PremiumFeature.MCP);
 
-      expect(get(allowed)).toBe(false);
+      expect(get(minimumTier)).toBeNull();
 
       set(premium, true);
       await fetchCapabilities();
@@ -463,14 +439,14 @@ describe('modules/premium/use-feature-access', () => {
       const { allowed: gnosisPayAllowed, minimumTier: gnosisPayTier } = useFeatureAccess(PremiumFeature.GNOSIS_PAY);
       const { allowed: moneriumAllowed, minimumTier: moneriumTier } = useFeatureAccess(PremiumFeature.MONERIUM);
 
-      expect(get(gnosisPayAllowed)).toBe(false);
-      expect(get(moneriumAllowed)).toBe(false);
+      expect(get(gnosisPayAllowed)).toBe(true);
+      expect(get(moneriumAllowed)).toBe(true);
 
       set(premium, true);
       await fetchCapabilities();
 
       expect(get(gnosisPayAllowed)).toBe(true);
-      expect(get(moneriumAllowed)).toBe(false);
+      expect(get(moneriumAllowed)).toBe(true);
       expect(get(gnosisPayTier)).toBe('Advanced');
       expect(get(moneriumTier)).toBe('Advanced');
     });

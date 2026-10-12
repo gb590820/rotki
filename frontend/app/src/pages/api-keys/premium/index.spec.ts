@@ -4,8 +4,8 @@ import { type DOMWrapper, mount, type VueWrapper } from '@vue/test-utils';
 import flushPromises from 'flush-promises/index';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConfirmStore } from '@/modules/core/common/use-confirm-store';
-import { usePremium } from '@/modules/premium/use-premium';
 import { usePremiumCredentialsApi } from '@/modules/premium/use-premium-credentials-api';
+import { usePremiumStore } from '@/modules/premium/use-premium-store';
 import { useInterop } from '@/modules/shell/app/use-electron-interop';
 import PremiumSettings from '@/pages/api-keys/premium/index.vue';
 
@@ -126,7 +126,7 @@ describe('premium-settings', () => {
   });
 
   it('should update premium status upon removing keys', async () => {
-    const premium = usePremium();
+    const { premium } = storeToRefs(usePremiumStore());
     set(premium, true);
 
     await nextTick();

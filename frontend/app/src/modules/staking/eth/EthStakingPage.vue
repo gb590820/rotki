@@ -2,6 +2,7 @@
 import AccountFormApiKeyAlert from '@/modules/accounts/management/AccountFormApiKeyAlert.vue';
 import AccountFormApiKeyMenu from '@/modules/accounts/management/AccountFormApiKeyMenu.vue';
 import { EthStaking } from '@/modules/premium/premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 import { useExternalApiKeys } from '@/modules/settings/api-keys/external/use-external-api-keys';
 import ModuleNotActive from '@/modules/settings/modules/ModuleNotActive.vue';
 import { useSetting } from '@/modules/settings/use-setting';
@@ -17,6 +18,7 @@ import { useEthValidatorManagement } from './use-eth-validator-management';
 const { t } = useI18n({ useScope: 'global' });
 
 const { allowed, enabled, module } = useEthStakingAccess();
+const subscribed = useSubscription();
 
 // API key check (only when module is allowed and enabled)
 const { getApiKey } = useExternalApiKeys();
@@ -82,7 +84,7 @@ onBeforeMount(async () => {
 
 <template>
   <div>
-    <EthStakingPagePlaceholder v-if="!allowed" />
+    <EthStakingPagePlaceholder v-if="!subscribed" />
     <ModuleNotActive
       v-else-if="!enabled"
       :modules="[module]"
