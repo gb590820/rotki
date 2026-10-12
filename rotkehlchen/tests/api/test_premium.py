@@ -16,6 +16,7 @@ from rotkehlchen.premium.premium import (
     get_user_limit,
     has_premium_capability,
     has_premium_check,
+    to_db_limit,
 )
 from rotkehlchen.tests.utils.api import (
     api_url_for,
@@ -392,6 +393,12 @@ def test_local_features_are_unlocked_without_subscription() -> None:
         assert has_premium_capability(premium=None, capability_name=capability_name) is True
     for limit_type in UserLimitType:
         assert get_user_limit(premium=None, limit_type=limit_type) == (UNLIMITED, True)
+
+
+def test_to_db_limit() -> None:
+    """The DB layer spells "no limit" as None, so UNLIMITED must not reach it as -1"""
+    assert to_db_limit(UNLIMITED) is None
+    assert to_db_limit(10) == 10
 
 
 def _expected_local_capabilities(

@@ -9,7 +9,7 @@ from rotkehlchen.errors.misc import IncompleteTransactionsQuery, RemoteError
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.events.structures.base import HistoryBaseEntry, HistoryEvent
 from rotkehlchen.logging import RotkehlchenLogsAdapter
-from rotkehlchen.premium.premium import UserLimitType, get_user_limit
+from rotkehlchen.premium.premium import UserLimitType, get_user_limit, to_db_limit
 from rotkehlchen.types import EVM_CHAINS_WITH_TRANSACTIONS, Location, Timestamp
 from rotkehlchen.user_messages import NetworkFailure
 from rotkehlchen.utils.misc import timestamp_to_date, ts_sec_to_ms
@@ -119,7 +119,7 @@ class HistoryQueryingManager:
         events_result = db.get_history_events_and_limit_info(
             cursor=cursor,
             filter_query=filter_query,
-            entries_limit=history_events_limit,
+            entries_limit=to_db_limit(history_events_limit),
         )
         return events_result.events, events_result.entries_found  # type: ignore  # event is guaranteed HistoryEvent
 

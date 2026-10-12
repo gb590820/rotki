@@ -56,6 +56,7 @@ from rotkehlchen.premium.premium import (
     get_user_limit,
     has_premium_capability,
     has_premium_check,
+    to_db_limit,
 )
 from rotkehlchen.serialization.serialize import PreSerializedList
 from rotkehlchen.tasks.bridges import process_bridge_transactions
@@ -410,7 +411,9 @@ class HistoryService:
             # DISTINCT … LIMIT N window subquery can never truncate results and can be skipped.
             # This does NOT fire when only the filtered subset would fit — we would need an
             # extra query to know that, which is not worth it here.
-            effective_entries_limit = None if entries_total <= entries_limit else entries_limit
+            effective_entries_limit = to_db_limit(entries_limit)
+            if effective_entries_limit is not None and entries_total <= effective_entries_limit:
+                effective_entries_limit = None
             _, processed_events_result, joined_group_ids, entries_found, entries_with_limit, entries_total, ignored_group_identifiers, event_to_pair = self._query_history_events_with_matched_processing(  # noqa: E501
                 cursor=cursor,
                 dbevents=dbevents,
@@ -545,7 +548,7 @@ class HistoryService:
                 cursor=cursor,
                 dbevents=dbevents,
                 filter_query=filter_query,
-                entries_limit=entries_limit,
+                entries_limit=to_db_limit(entries_limit),
                 aggregate_by_group_ids=False,
                 match_exact_events=match_exact_events,
                 entries_total=0,
@@ -694,7 +697,7 @@ class HistoryService:
             entries_total, _ = history_events_db.get_history_events_count(
                 cursor=cursor,
                 query_filter=table_filter,
-                entries_limit=entries_limit,
+                entries_limit=to_db_limit(entries_limit),
             )
             value_query_filters, value_bindings = value_filter.prepare(
                 with_pagination=False,
