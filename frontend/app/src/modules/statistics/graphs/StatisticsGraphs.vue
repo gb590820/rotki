@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StatisticsGraphSettings from '@/modules/settings/StatisticsGraphSettings.vue';
 import AssetSelect from '@/modules/shell/components/inputs/AssetSelect.vue';
 import AssetAmountAndValueOverTime from './AssetAmountAndValueOverTime.vue';
 import NetValueOverTimeCard from './NetValueOverTimeCard.vue';
@@ -7,11 +8,25 @@ import ValueDistributionCard from './ValueDistributionCard.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const selectedAsset = ref<string>();
+
+/**
+ * Bumped when a graph setting changes. The over-time charts are keyed on it, so they remount and
+ * load their data again under the new setting.
+ */
+const settingsVersion = shallowRef<number>(0);
+
+function reloadCharts(): void {
+  set(settingsVersion, get(settingsVersion) + 1);
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
-    <NetValueOverTimeCard />
+    <div class="flex justify-end">
+      <StatisticsGraphSettings @updated="reloadCharts()" />
+    </div>
+
+    <NetValueOverTimeCard :key="`net-value-${settingsVersion}`" />
 
     <div class="flex flex-col gap-2">
       <AssetSelect
@@ -24,6 +39,7 @@ const selectedAsset = ref<string>();
       />
       <AssetAmountAndValueOverTime
         v-if="selectedAsset"
+        :key="`asset-${settingsVersion}`"
         :asset="selectedAsset"
       />
       <RuiCard

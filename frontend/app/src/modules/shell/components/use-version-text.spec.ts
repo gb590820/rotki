@@ -62,25 +62,6 @@ describe('useVersionText', () => {
     });
   });
 
-  describe('the premium components', () => {
-    it('should name their version and build when they were loaded', () => {
-      const text = useVersionText({
-        appVersion: '1.45.0',
-        components: { build: 1700000000000, version: '16.0.1' },
-        frontendVersion: '1.45.1',
-      });
-
-      expect(lines(get(text))).toContain('about.components.version 16.0.1');
-      expect(lines(get(text))).toContain('about.components.build 1700000000000');
-    });
-
-    it('should say nothing about them for a user without premium', () => {
-      const text = useVersionText({ appVersion: '1.45.0', frontendVersion: '1.45.1' });
-
-      expect(get(text)).not.toContain('about.components');
-    });
-  });
-
   it('should follow the summary as it fills in', () => {
     const summary = ref<VersionSummary>({ appVersion: '1.45.0', frontendVersion: '1.45.1' });
     const text = useVersionText(summary);

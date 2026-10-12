@@ -1,11 +1,6 @@
 {
   "about": {
     "app_version": "App Version:",
-    "components": {
-      "build": "Build:",
-      "title": "Premium Components",
-      "version": "Premium Version:"
-    },
     "copy_data_directory_tooltip": "Copy data directory",
     "copy_information_tooltip": "Copy the application information",
     "data_directory": "Data Directory:",
@@ -5350,8 +5345,11 @@
       "visible_percentage": "% of visible items only:"
     },
     "theme_manager": {
+      "accent": "Accent color",
       "dark_theme": "Dark Theme",
+      "graph": "Graph color",
       "light_theme": "Light Theme",
+      "primary": "Primary color",
       "reset": {
         "default": "Reset to the default application color",
         "short": "Reset to default"
@@ -5424,12 +5422,6 @@
       }
     },
     "title": "Premium Devices"
-  },
-  "premium_loading_failed": {
-    "description": "This might indicate a problem with the premium component service.",
-    "open_issue": "If the problem persists open an issue in our issue tracker.",
-    "title": "There was an error loading the component.",
-    "try_again": "Please try again later."
   },
   "premium_lock": {
     "tooltip": "Available with a rotki Premium plan"
@@ -6384,7 +6376,6 @@
   "task_manager": {
     "error": "An error occurred while processing task [{taskId}] '{title}': {error}"
   },
-  "theme_manager_lock": "The theme manager is not available on your current plan",
   "theme_switch": {
     "auto": "Auto (Detect Device Theme)",
     "dark": "Dark",

@@ -1,11 +1,6 @@
 {
   "about": {
     "app_version": "应用版本：",
-    "components": {
-      "build": "构建：",
-      "title": "高级版组件",
-      "version": "高级版版本："
-    },
     "copy_data_directory_tooltip": "复制数据目录",
     "copy_information_tooltip": "复制应用信息",
     "data_directory": "数据目录：",
@@ -5286,12 +5281,6 @@
     },
     "title": "高级版设备"
   },
-  "premium_loading_failed": {
-    "description": "这可能表示高级版组件服务存在问题。",
-    "open_issue": "如果问题持续存在，请在我们的 issue 追踪器中提交 issue。",
-    "title": "加载组件时出错。",
-    "try_again": "请稍后再试。"
-  },
   "premium_lock": {
     "tooltip": "需要 rotki 高级版套餐"
   },
@@ -6245,7 +6234,6 @@
   "task_manager": {
     "error": "处理任务 [{taskId}]“{title}”时出错：{error}"
   },
-  "theme_manager_lock": "你当前的套餐不包含主题管理器",
   "theme_switch": {
     "auto": "自动（检测设备主题）",
     "dark": "深色",
