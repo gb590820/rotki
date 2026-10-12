@@ -5450,7 +5450,6 @@
     },
     "chart_limit": {
       "description": "Experience the full potential of rotki with a Premium subscription.",
-      "statistic": "The statistics view is not available",
       "title": "Graphs are not available"
     },
     "cloud_backup_unavailable": "Cloud backup is not available for your current plan. {link} to enable cloud sync.",

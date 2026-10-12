@@ -5449,7 +5449,6 @@
     },
     "chart_limit": {
       "description": "Premium abonelikle rotki'nin tüm potansiyelini keşfedin.",
-      "statistic": "İstatistik görünümü kullanılamıyor",
       "title": "Grafikler kullanılamıyor"
     },
     "cloud_backup_unavailable": "Bulut yedekleme mevcut planınızda kullanılamıyor. {link} ve bulut senkronizasyonunu etkinleştirin.",

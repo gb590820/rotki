@@ -3504,7 +3504,6 @@
     },
     "chart_limit": {
       "description": "Ощутите весь потенциал rotki с подпиской Premium.",
-      "statistic": "Просмотр статистики недоступен",
       "title": "Графики недоступны"
     },
     "delete_confirmation": {
