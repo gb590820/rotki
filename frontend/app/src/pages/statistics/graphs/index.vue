@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { msg } from '@/message-key';
 import { NoteLocation } from '@/modules/core/common/notes';
-import { PremiumStatistics } from '@/modules/premium/premium';
-import { useSubscription } from '@/modules/premium/use-subscription';
-import StatisticPlaceholder from '@/modules/statistics/StatisticPlaceholder.vue';
+import StatisticsGraphs from '@/modules/statistics/graphs/StatisticsGraphs.vue';
 
 definePage({
   meta: {
@@ -11,13 +9,10 @@ definePage({
     noteLocation: NoteLocation.STATISTICS,
   },
 });
-
-const subscribed = useSubscription();
 </script>
 
 <template>
   <div class="container">
-    <PremiumStatistics v-if="subscribed" />
-    <StatisticPlaceholder v-else />
+    <StatisticsGraphs />
   </div>
 </template>

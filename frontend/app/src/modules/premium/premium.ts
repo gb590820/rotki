@@ -139,11 +139,7 @@ function createFactory(component: string, options?: { loading?: Component; error
   });
 }
 
-export const PremiumStatistics = createFactory('PremiumStatistics');
-
 export const EthStaking = createFactory('EthStaking');
-
-export const AssetAmountAndValueOverTime = createFactory('AssetAmountAndValueOverTime');
 
 export const ThemeManager = createFactory('ThemeManager');
 

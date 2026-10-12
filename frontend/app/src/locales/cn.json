@@ -5310,9 +5310,7 @@
       "sync_hint": "你的数据在同步到 rotki 服务器之前会被加密，除你之外任何人都无法读取。"
     },
     "chart_limit": {
-      "description": "订阅高级版，体验 rotki 的全部功能。",
-      "statistic": "统计视图不可用",
-      "title": "图表不可用"
+      "description": "订阅高级版，体验 rotki 的全部功能。"
     },
     "cloud_backup_unavailable": "你当前的套餐不支持云备份。{link}以启用云同步。",
     "cloud_backup_upgrade_link": "升级订阅",

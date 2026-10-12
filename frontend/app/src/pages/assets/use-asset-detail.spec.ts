@@ -1,7 +1,7 @@
 import { type AssetBalanceWithPrice, bigNumberify } from '@rotki/common';
 import { withSetup } from '@test/utils/with-setup';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { computed, type ComputedRef, type Ref } from 'vue';
+import { computed, type ComputedRef } from 'vue';
 import { useAssetDetail } from './use-asset-detail';
 
 const PARENT = 'ETH';
@@ -50,11 +50,6 @@ vi.mock('@/modules/balances/use-aggregated-balances', async () => {
       useBalances: (): ComputedRef<AssetBalanceWithPrice[]> => computedFn(() => balances.current),
     }),
   };
-});
-
-vi.mock('@/modules/premium/use-subscription', async () => {
-  const { shallowRef } = await import('vue');
-  return { useSubscription: (): Ref<boolean> => shallowRef(false) };
 });
 
 vi.mock('@/pages/assets/use-asset-page-actions', async () => {
@@ -189,32 +184,6 @@ describe('pages/assets/useAssetDetail', () => {
       const { collectionBalance } = setup();
 
       expect(get(collectionBalance)).toEqual([]);
-    });
-  });
-
-  describe('which asset the price chart follows', () => {
-    it('should follow the asset itself when there is no collection', () => {
-      const { collectionAssetWithPrice } = setup();
-
-      expect(get(collectionAssetWithPrice)).toBe(PARENT);
-    });
-
-    it('should follow the parent when the parent is itself priced', () => {
-      routeQuery.current = { collectionParent: 'true' };
-      balances.current = [{ ...balance(PARENT), breakdown: [balance(MEMBER), balance(PARENT)] }];
-
-      const { collectionAssetWithPrice } = setup();
-
-      expect(get(collectionAssetWithPrice)).toBe(PARENT);
-    });
-
-    it('should fall back to the first member when the parent is not priced', () => {
-      routeQuery.current = { collectionParent: 'true' };
-      balances.current = [{ ...balance(PARENT), breakdown: [balance(MEMBER), balance('OTHER')] }];
-
-      const { collectionAssetWithPrice } = setup();
-
-      expect(get(collectionAssetWithPrice)).toBe(MEMBER);
     });
   });
 

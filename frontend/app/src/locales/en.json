@@ -5335,6 +5335,7 @@
       "negative_amount_detected": "Negative amount detected during historical processing.",
       "netvalue_over_time": "Netvalue over time",
       "no_balance_snapshot_data_available": "No balance snapshot data available.",
+      "others": "Others",
       "range_selector": {
         "data_available": "Data available",
         "ending_date_must_before_starting_date": "The ending date cannot be earlier than the starting date.",
@@ -5448,9 +5449,7 @@
       "sync_hint": "Your data is encrypted before being synced to the rotki server and cannot be read by anyone except you."
     },
     "chart_limit": {
-      "description": "Experience the full potential of rotki with a Premium subscription.",
-      "statistic": "The statistics view is not available",
-      "title": "Graphs are not available"
+      "description": "Experience the full potential of rotki with a Premium subscription."
     },
     "cloud_backup_unavailable": "Cloud backup is not available for your current plan. {link} to enable cloud sync.",
     "cloud_backup_upgrade_link": "Upgrade your subscription",
