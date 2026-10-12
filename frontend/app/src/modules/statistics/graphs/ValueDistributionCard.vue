@@ -75,10 +75,10 @@ onMounted(async () => {
 
     <div
       v-else
-      class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center"
+      class="flex flex-col gap-4"
     >
       <VChart
-        class="h-64 w-full"
+        class="h-56 w-full"
         :option="chartOption"
         autoresize
       />
@@ -95,26 +95,30 @@ onMounted(async () => {
           />
           <span
             v-if="slice.key === OTHERS_SLICE_KEY"
-            class="grow"
+            class="grow min-w-0"
           >
             {{ label(slice.key) }}
           </span>
           <LocationDisplay
             v-else-if="distributionBy === 'location'"
-            class="grow"
+            class="grow min-w-0"
             :identifier="slice.key"
             horizontal
           />
           <AssetDetails
             v-else
-            class="grow"
+            class="grow min-w-0"
             :asset="slice.key"
           />
-          <FiatDisplay :value="slice.value" />
           <PercentageDisplay
             class="w-20 shrink-0 text-rui-text-secondary"
             data-testid="value-distribution-percentage"
             :value="slice.percentage.toFixed(2)"
+            :asset-padding="0.1"
+          />
+          <FiatDisplay
+            class="shrink-0"
+            :value="slice.value"
           />
         </li>
       </ul>
