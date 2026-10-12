@@ -32,8 +32,8 @@ vi.mock('@/modules/shell/theme/use-theme-settings', () => ({
   }),
 }));
 
-vi.mock('@/modules/premium/use-premium', () => ({
-  usePremium: (): typeof mockPremium => mockPremium,
+vi.mock('@/modules/premium/use-subscription', () => ({
+  useSubscription: (): typeof mockPremium => mockPremium,
 }));
 
 describe('useDarkMode', () => {
@@ -57,7 +57,7 @@ describe('useDarkMode', () => {
     expect(mockSwitchThemeScheme).toHaveBeenCalledWith(ThemeMode.light);
   });
 
-  it('should use the default colors when not premium', () => {
+  it('should use the default colors without a subscription', () => {
     const { usedTheme } = useDarkMode();
     set(mockIsDark, false);
     expect(get(usedTheme)).toStrictEqual(LIGHT_COLORS);
@@ -65,7 +65,7 @@ describe('useDarkMode', () => {
     expect(get(usedTheme)).toStrictEqual(DARK_COLORS);
   });
 
-  it('should use the configured premium themes when premium', () => {
+  it('should use the configured themes with a subscription', () => {
     set(mockPremium, true);
     const { usedTheme } = useDarkMode();
     set(mockIsDark, false);

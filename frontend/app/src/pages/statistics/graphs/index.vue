@@ -2,7 +2,7 @@
 import { msg } from '@/message-key';
 import { NoteLocation } from '@/modules/core/common/notes';
 import { PremiumStatistics } from '@/modules/premium/premium';
-import { PremiumFeature, useFeatureAccess } from '@/modules/premium/use-feature-access';
+import { useSubscription } from '@/modules/premium/use-subscription';
 import StatisticPlaceholder from '@/modules/statistics/StatisticPlaceholder.vue';
 
 definePage({
@@ -12,12 +12,12 @@ definePage({
   },
 });
 
-const { allowed } = useFeatureAccess(PremiumFeature.GRAPHS_VIEW);
+const subscribed = useSubscription();
 </script>
 
 <template>
   <div class="container">
-    <PremiumStatistics v-if="allowed" />
+    <PremiumStatistics v-if="subscribed" />
     <StatisticPlaceholder v-else />
   </div>
 </template>

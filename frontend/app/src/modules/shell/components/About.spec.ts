@@ -27,8 +27,8 @@ vi.mock('@/modules/core/common/use-main-store', () => ({
   }),
 }));
 
-vi.mock('@/modules/premium/use-premium', () => ({
-  usePremium: (): Ref<boolean> => premium,
+vi.mock('@/modules/premium/use-subscription', () => ({
+  useSubscription: (): Ref<boolean> => premium,
 }));
 
 vi.mock('@/modules/shell/app/use-electron-interop', () => ({
@@ -125,7 +125,7 @@ describe('about', () => {
    * is active and the bundle actually arrived.
    */
   describe('the premium components', () => {
-    it('should be reported once premium loaded them', async () => {
+    it('should be reported once the subscription loaded them', async () => {
       set(premium, true);
       window.PremiumComponents = { build: 1_700_000_000_000, version: '16.0.1' };
 
@@ -134,7 +134,7 @@ describe('about', () => {
       expect(wrapper.find('[data-testid=about-components-version]').text()).toContain('16.0.1');
     });
 
-    it('should be left out for a non-premium account', async () => {
+    it('should be left out for an account without a subscription', async () => {
       window.PremiumComponents = { build: 1_700_000_000_000, version: '16.0.1' };
 
       const wrapper = await mountResolved();
@@ -142,7 +142,7 @@ describe('about', () => {
       expect(wrapper.find('[data-testid=about-components-version]').exists()).toBe(false);
     });
 
-    it('should be left out when premium is on but the bundle never arrived', async () => {
+    it('should be left out when subscribed but the bundle never arrived', async () => {
       set(premium, true);
 
       const wrapper = await mountResolved();

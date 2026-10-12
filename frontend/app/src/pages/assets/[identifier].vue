@@ -45,7 +45,7 @@ const {
   loadingIgnore,
   loadingSpam,
   loadingWhitelist,
-  premium,
+  subscribed,
   toggleIgnoreAsset,
   toggleSpam,
   toggleWhitelistAsset,
@@ -138,7 +138,7 @@ const {
     />
 
     <AssetAmountAndValueOverTime
-      v-if="premium"
+      v-if="subscribed"
       :asset="identifier"
       :price-asset="collectionAssetWithPrice"
       :collection-id="collectionId"

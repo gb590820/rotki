@@ -21,7 +21,7 @@ interface DetailState {
   collectionId: number | undefined;
   isCollectionParent: boolean;
   isCustomAsset: boolean;
-  premium: boolean;
+  subscribed: boolean;
 }
 
 const detailState = vi.hoisted((): DetailState => ({
@@ -29,7 +29,7 @@ const detailState = vi.hoisted((): DetailState => ({
   collectionId: undefined,
   isCollectionParent: false,
   isCustomAsset: false,
-  premium: false,
+  subscribed: false,
 }));
 
 vi.mock('@/modules/premium/premium', async () => {
@@ -67,7 +67,7 @@ vi.mock('@/pages/assets/use-asset-detail', async () => {
       loadingIgnore: computed(() => false),
       loadingSpam: computed(() => false),
       loadingWhitelist: computed(() => false),
-      premium: shallowRef(detailState.premium),
+      subscribed: shallowRef(detailState.subscribed),
       toggleIgnoreAsset,
       toggleSpam,
       toggleWhitelistAsset,
@@ -136,7 +136,7 @@ describe('pages/assets/[identifier]', () => {
     detailState.collectionId = undefined;
     detailState.isCollectionParent = false;
     detailState.isCustomAsset = false;
-    detailState.premium = false;
+    detailState.subscribed = false;
   });
 
   afterEach(() => {
@@ -242,15 +242,15 @@ describe('pages/assets/[identifier]', () => {
   });
 
   describe('the value-over-time chart', () => {
-    it('should show the placeholder without premium', () => {
+    it('should show the placeholder without a subscription', () => {
       wrapper = mountPage();
 
       expect(wrapper.find('[data-testid=chart-placeholder]').exists()).toBe(true);
       expect(wrapper.findComponent(PremiumChartStub).exists()).toBe(false);
     });
 
-    it('should show the real chart with premium, carrying the priced asset and collection', () => {
-      detailState.premium = true;
+    it('should show the real chart with a subscription, carrying the priced asset and collection', () => {
+      detailState.subscribed = true;
       detailState.collectionId = 5;
 
       wrapper = mountPage();
