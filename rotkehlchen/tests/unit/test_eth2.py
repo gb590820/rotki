@@ -1602,7 +1602,7 @@ def test_withdrawals_derived_data_invalidated_without_eth2_module(
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [False, True])
-def test_eth_staking_is_not_capped(eth2: 'Eth2') -> None:
+def test_eth_staking_is_not_capped(eth2: Eth2) -> None:
     """Adding any amount of stake passes, so the staked total is never even queried."""
     with patch.object(eth2, '_get_total_eth_staked') as get_total_eth_staked:
         eth2._check_eth_staking_limit(validator_balance=FVal(100_000), ownership_proportion=ONE)
