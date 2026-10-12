@@ -3,7 +3,6 @@ import type { ComputedRef, DeepReadonly, MaybeRefOrGetter, Ref } from 'vue';
 import { startPromise } from '@shared/utils';
 import { type AssetResolutionOptions, useAssetInfoRetrieval } from '@/modules/assets/use-asset-info-retrieval';
 import { useAggregatedBalances } from '@/modules/balances/use-aggregated-balances';
-import { useSubscription } from '@/modules/premium/use-subscription';
 import { useAssetPageActions } from '@/pages/assets/use-asset-page-actions';
 
 /**
@@ -18,7 +17,6 @@ type ContractInfo = ReturnType<ReturnType<typeof useAssetInfoRetrieval>['useAsse
 
 interface UseAssetDetailReturn {
   asset: AssetInfo;
-  collectionAssetWithPrice: ComputedRef<string | undefined>;
   collectionBalance: ComputedRef<AssetBalanceWithPrice[]>;
   collectionId: ComputedRef<number | undefined>;
   contractInfo: ContractInfo;
@@ -28,8 +26,6 @@ interface UseAssetDetailReturn {
   loadingIgnore: DeepReadonly<Ref<boolean>>;
   loadingSpam: DeepReadonly<Ref<boolean>>;
   loadingWhitelist: DeepReadonly<Ref<boolean>>;
-  /** Gates the value-over-time chart, which still comes from the remote premium bundle */
-  subscribed: Readonly<Ref<boolean>>;
   toggleIgnoreAsset: () => Promise<void>;
   toggleSpam: () => Promise<void>;
   toggleWhitelistAsset: () => Promise<void>;
@@ -40,7 +36,6 @@ export function useAssetDetail(identifier: MaybeRefOrGetter<string>): UseAssetDe
   const route = useRoute();
 
   const { refetchAssetInfo, useAssetContractInfo, useAssetInfo } = useAssetInfoRetrieval();
-  const subscribed = useSubscription();
   const { useBalances } = useAggregatedBalances();
 
   const aggregatedBalances = useBalances();
@@ -93,30 +88,12 @@ export function useAssetDetail(identifier: MaybeRefOrGetter<string>): UseAssetDe
     return get(aggregatedBalances).find(data => data.asset === toValue(identifier))?.breakdown ?? [];
   });
 
-  /**
-   * Which asset the price chart should follow. The parent itself when it is priced or when there
-   * is nothing to go on, otherwise the first member of the collection that is.
-   */
-  const collectionAssetWithPrice = computed<string | undefined>(() => {
-    const balances = get(collectionBalance);
-    const id = toValue(identifier);
-
-    if (balances.length === 0)
-      return id;
-
-    if (balances.some(item => item.asset === id))
-      return id;
-
-    return balances[0].asset;
-  });
-
   function goToEdit(): void {
     startPromise(router.push(get(editRoute)));
   }
 
   return {
     asset,
-    collectionAssetWithPrice,
     collectionBalance,
     collectionId,
     contractInfo,
@@ -126,7 +103,6 @@ export function useAssetDetail(identifier: MaybeRefOrGetter<string>): UseAssetDe
     loadingIgnore,
     loadingSpam,
     loadingWhitelist,
-    subscribed,
     toggleIgnoreAsset,
     toggleSpam,
     toggleWhitelistAsset,

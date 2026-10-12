@@ -5448,8 +5448,7 @@
       "sync_hint": "Verileriniz rotki sunucusuyla senkronize edilmeden önce şifrelenir ve sizden başka hiç kimse tarafından okunamaz."
     },
     "chart_limit": {
-      "description": "Premium abonelikle rotki'nin tüm potansiyelini keşfedin.",
-      "title": "Grafikler kullanılamıyor"
+      "description": "Premium abonelikle rotki'nin tüm potansiyelini keşfedin."
     },
     "cloud_backup_unavailable": "Bulut yedekleme mevcut planınızda kullanılamıyor. {link} ve bulut senkronizasyonunu etkinleştirin.",
     "cloud_backup_upgrade_link": "Aboneliğinizi yükseltin",

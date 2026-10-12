@@ -5449,8 +5449,7 @@
       "sync_hint": "Your data is encrypted before being synced to the rotki server and cannot be read by anyone except you."
     },
     "chart_limit": {
-      "description": "Experience the full potential of rotki with a Premium subscription.",
-      "title": "Graphs are not available"
+      "description": "Experience the full potential of rotki with a Premium subscription."
     },
     "cloud_backup_unavailable": "Cloud backup is not available for your current plan. {link} to enable cloud sync.",
     "cloud_backup_upgrade_link": "Upgrade your subscription",

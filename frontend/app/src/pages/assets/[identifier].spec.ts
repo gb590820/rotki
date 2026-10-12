@@ -21,7 +21,6 @@ interface DetailState {
   collectionId: number | undefined;
   isCollectionParent: boolean;
   isCustomAsset: boolean;
-  subscribed: boolean;
 }
 
 const detailState = vi.hoisted((): DetailState => ({
@@ -29,22 +28,10 @@ const detailState = vi.hoisted((): DetailState => ({
   collectionId: undefined,
   isCollectionParent: false,
   isCustomAsset: false,
-  subscribed: false,
 }));
 
-vi.mock('@/modules/premium/premium', async () => {
-  const { defineComponent } = await import('vue');
-  return {
-    AssetAmountAndValueOverTime: defineComponent({
-      name: 'AssetAmountAndValueOverTime',
-      props: { asset: { default: '', type: String }, collectionId: { default: undefined, type: Number }, priceAsset: { default: undefined, type: String } },
-      template: '<div />',
-    }),
-  };
-});
-
 vi.mock('@/pages/assets/use-asset-detail', async () => {
-  const { computed, shallowRef } = await import('vue');
+  const { computed } = await import('vue');
   return {
     useAssetDetail: (): ReturnType<typeof useAssetDetail> => ({
       asset: computed(() => ({
@@ -57,7 +44,6 @@ vi.mock('@/pages/assets/use-asset-detail', async () => {
         resolved: true,
         symbol: 'ETH',
       })),
-      collectionAssetWithPrice: computed(() => IDENTIFIER),
       collectionBalance: computed(() => detailState.collectionBalance),
       collectionId: computed(() => detailState.collectionId),
       contractInfo: computed(() => undefined),
@@ -67,7 +53,6 @@ vi.mock('@/pages/assets/use-asset-detail', async () => {
       loadingIgnore: computed(() => false),
       loadingSpam: computed(() => false),
       loadingWhitelist: computed(() => false),
-      subscribed: shallowRef(detailState.subscribed),
       toggleIgnoreAsset,
       toggleSpam,
       toggleWhitelistAsset,
@@ -91,9 +76,9 @@ const AssetBalancesStub = defineComponent({
   template: '<div data-testid="collection-balances" />',
 });
 
-const PremiumChartStub = defineComponent({
+const ChartStub = defineComponent({
   name: 'AssetAmountAndValueOverTime',
-  props: { asset: { default: '', type: String }, collectionId: { default: undefined, type: Number }, priceAsset: { default: undefined, type: String } },
+  props: { asset: { default: '', type: String }, collectionId: { default: undefined, type: Number } },
   template: '<div />',
 });
 
@@ -113,8 +98,7 @@ describe('pages/assets/[identifier]', () => {
         plugins: [createPinia()],
         provide: libraryDefaults,
         stubs: {
-          AssetAmountAndValueOverTime: PremiumChartStub,
-          AssetAmountAndValuePlaceholder: { template: '<div data-testid="chart-placeholder" />' },
+          AssetAmountAndValueOverTime: ChartStub,
           AssetBalances: AssetBalancesStub,
           AssetExternalLinks: { props: ['coingecko', 'cryptocompare'], template: '<div />' },
           AssetIcon: AssetIconStub,
@@ -136,7 +120,6 @@ describe('pages/assets/[identifier]', () => {
     detailState.collectionId = undefined;
     detailState.isCollectionParent = false;
     detailState.isCustomAsset = false;
-    detailState.subscribed = false;
   });
 
   afterEach(() => {
@@ -242,23 +225,13 @@ describe('pages/assets/[identifier]', () => {
   });
 
   describe('the value-over-time chart', () => {
-    it('should show the placeholder without a subscription', () => {
-      wrapper = mountPage();
-
-      expect(wrapper.find('[data-testid=chart-placeholder]').exists()).toBe(true);
-      expect(wrapper.findComponent(PremiumChartStub).exists()).toBe(false);
-    });
-
-    it('should show the real chart with a subscription, carrying the priced asset and collection', () => {
-      detailState.subscribed = true;
+    it('should chart the asset and its collection', () => {
       detailState.collectionId = 5;
 
       wrapper = mountPage();
 
-      const chart = wrapper.findComponent(PremiumChartStub);
-      expect(chart.exists()).toBe(true);
+      const chart = wrapper.findComponent(ChartStub);
       expect(chart.props('asset')).toBe(IDENTIFIER);
-      expect(chart.props('priceAsset')).toBe(IDENTIFIER);
       expect(chart.props('collectionId')).toBe(5);
     });
   });
