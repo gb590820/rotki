@@ -1,4 +1,4 @@
-import type { DeepReadonly, Ref } from 'vue';
+import type { ComputedRef, Ref } from 'vue';
 import { type BigNumber, type Eth2ValidatorEntry, type Eth2Validators, type EthStakingCombinedFilter, type EthStakingFilter, Zero } from '@rotki/common';
 import { omit } from 'es-toolkit';
 import { isEmpty } from 'es-toolkit/compat';
@@ -12,7 +12,8 @@ interface UseEthValidatorManagementReturn {
   modelFilter: Ref<EthStakingCombinedFilter | undefined>;
   modelSelection: Ref<EthStakingFilter>;
   setTotal: (validators?: Eth2Validators['entries']) => void;
-  total: DeepReadonly<Ref<BigNumber>>;
+  /** ETH staked by the selected validators, read-only so only this composable sets it */
+  total: ComputedRef<BigNumber>;
 }
 
 export function useEthValidatorManagement(): UseEthValidatorManagementReturn {
@@ -108,6 +109,6 @@ export function useEthValidatorManagement(): UseEthValidatorManagementReturn {
     modelFilter,
     modelSelection,
     setTotal,
-    total: readonly(total),
+    total: computed<BigNumber>(() => get(total)),
   };
 }

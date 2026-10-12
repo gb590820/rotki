@@ -4,13 +4,8 @@ import time
 from typing import Any, Final
 
 from rotkehlchen.mcp.backend import BackendQueryError, get_backend_config, request_api
+from rotkehlchen.premium.premium import MCP_CAPABILITY
 
-DEFAULT_TIER: Final = 'Free'
-# Tiers that do NOT grant MCP access. Everything else (Basic and up) does. The tier
-# names are defined server-side, not here; the authoritative list can be fetched from
-# https://rotki.com/webapi/2/available-tiers (the `tier_name` of each entry). As of this
-# writing the paid tiers are ordered Supporter < Basic < Advanced.
-NON_MCP_TIERS: Final = frozenset({DEFAULT_TIER, 'Supporter'})
 PREMIUM_CACHE_TTL: Final = 60.0
 UPGRADE_URL: Final = 'https://rotki.com/products/'
 
@@ -24,17 +19,19 @@ def _query_mcp_access() -> bool:
         endpoint='premium/capabilities',
         timeout=backend_config.timeout,
     )
-    if not isinstance(result := payload.get('result'), dict):
+    if (
+            not isinstance(result := payload.get('result'), dict) or
+            not isinstance(mcp_capability := result.get(MCP_CAPABILITY), dict)
+    ):
         raise BackendQueryError(
             'rotki backend returned an unexpected premium capabilities response',
         )
-    return result.get('current_tier', DEFAULT_TIER) not in NON_MCP_TIERS
+    return mcp_capability.get('enabled') is True
 
 
 def has_mcp_access() -> bool:
-    """Return whether the unlocked backend's subscription tier grants MCP access.
+    """Return whether the unlocked backend reports the MCP capability as enabled.
 
-    MCP is available to the Basic tier and up; the Free and Supporter tiers are excluded.
     The result is cached for PREMIUM_CACHE_TTL seconds so gated tools don't hit the
     backend on every call, while still noticing a subscription that lapses or starts
     mid-session.
@@ -73,6 +70,6 @@ def premium_gate() -> dict[str, Any] | None:
 
     return {
         'error': 'premium_required',
-        'message': 'This tool requires a rotki Basic subscription or higher.',
+        'message': 'The rotki backend does not have the MCP capability enabled.',
         'upgrade_url': UPGRADE_URL,
     }

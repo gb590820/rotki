@@ -1033,8 +1033,13 @@ def test_get_historical_balance_unknown_asset(rotkehlchen_api_server: APIServer)
     )
 
 
+@pytest.mark.parametrize('start_with_valid_premium', [False])
 @pytest.mark.parametrize('have_decoders', [True])
-def test_get_historical_asset_balance_without_premium(rotkehlchen_api_server: APIServer) -> None:
+def test_get_historical_asset_balance_without_premium(
+        rotkehlchen_api_server: APIServer,
+        setup_historical_data: None,
+) -> None:
+    """Historical balances are computed locally, so they work without a subscription"""
     response = requests.post(
         api_url_for(
             rotkehlchen_api_server,
@@ -1042,14 +1047,12 @@ def test_get_historical_asset_balance_without_premium(rotkehlchen_api_server: AP
         ),
         json={
             'asset': 'BTC',
-            'timestamp': START_TS,
+            'timestamp': START_TS + DAY_IN_SECONDS * 2,
         },
     )
-    assert_error_response(
-        response=response,
-        contained_in_msg='does not have a premium subscription',
-        status_code=HTTPStatus.FORBIDDEN,
-    )
+    result = assert_proper_sync_response_with_result(response)
+    assert result['processing_required'] is False
+    assert result['entries']['BTC'] == '2.5'  # 2 - 0.5 + 1 (deposit to exchange, withdrawal not yet)  # noqa: E501
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [True])

@@ -46,6 +46,7 @@ from rotkehlchen.history.events.structures.types import (
     HistoryEventType,
 )
 from rotkehlchen.history.events.utils import create_group_identifier_from_unique_id
+from rotkehlchen.premium.premium import UNLIMITED
 from rotkehlchen.tests.utils.accounting import toggle_ignore_an_asset
 from rotkehlchen.tests.utils.api import (
     api_url_for,
@@ -571,7 +572,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     )
     result = assert_proper_sync_response_with_result(response)
     assert result['entries_found'] == 14
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 14
     for event in result['entries']:
         assert event['entry'] in expected_entries
@@ -595,7 +596,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     )
     result = assert_proper_sync_response_with_result(response)
     assert result['entries_found'] == 8
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 8
     assert len(result['entries']) == 8
 
@@ -613,7 +614,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     result = assert_proper_sync_response_with_result(response)
     assert len(result['entries']) == 1
     assert result['entries_found'] == 8
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 8
 
     # now with grouping, pagination and a filter
@@ -627,7 +628,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     result = assert_proper_sync_response_with_result(response)
     assert len(result['entries']) == 1
     assert result['entries_found'] == 6
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 8
 
     # filter by location using kraken and ethereum
@@ -641,7 +642,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     result = assert_proper_sync_response_with_result(response)
     assert len(result['entries']) == 1
     assert result['entries_found'] == 1
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 14
 
     response = requests.post(
@@ -654,7 +655,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
     result = assert_proper_sync_response_with_result(response)
     assert len(result['entries']) == 8
     assert result['entries_found'] == 8
-    assert result['entries_limit'] == 1000
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 14
 
     # test pagination and exclude_ignored_assets and group by event ids works
@@ -670,7 +671,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
         result = assert_proper_sync_response_with_result(response)
         assert len(result['entries']) == min(found, 5)
         assert result['entries_found'] == found
-        assert result['entries_limit'] == 1000
+        assert result['entries_limit'] == UNLIMITED
         assert result['entries_total'] == 8
 
     # test pagination and exclude_ignored_assets without group by event ids works
@@ -685,7 +686,7 @@ def test_get_events(rotkehlchen_api_server: APIServer) -> None:
         result = assert_proper_sync_response_with_result(response)
         assert len(result['entries']) == min(sub_events_found, 5)
         assert result['entries_found'] == events_found
-        assert result['entries_limit'] == 1000
+        assert result['entries_limit'] == UNLIMITED
         assert result['entries_total'] == 14
 
     # test pagination works fine with/without exclude_ignored_assets filter with/without premium

@@ -23,14 +23,8 @@ import machineid
 import requests
 from packaging.version import InvalidVersion, Version
 
-from rotkehlchen.accounting.constants import FREE_PNL_EVENTS_LIMIT, FREE_REPORTS_LOOKUP_LIMIT
-from rotkehlchen.api.websockets.typedefs import (
-    DBUploadStatusStep,
-    UserMessageRecord,
-    WSMessageType,
-)
+from rotkehlchen.api.websockets.typedefs import DBUploadStatusStep, WSMessageType
 from rotkehlchen.constants import ROTKEHLCHEN_SERVER_TIMEOUT
-from rotkehlchen.constants.limits import FREE_HISTORY_EVENTS_LIMIT
 from rotkehlchen.constants.timing import ROTKEHLCHEN_SERVER_BACKUP_TIMEOUT
 from rotkehlchen.db.cache import DBCacheStatic
 from rotkehlchen.errors.api import (
@@ -42,7 +36,6 @@ from rotkehlchen.errors.api import (
 from rotkehlchen.errors.misc import InputError, RemoteError
 from rotkehlchen.logging import RotkehlchenLogsAdapter
 from rotkehlchen.types import Timestamp
-from rotkehlchen.user_messages import BadData
 from rotkehlchen.utils.misc import is_production, set_user_agent
 from rotkehlchen.utils.network import create_session
 from rotkehlchen.utils.serialization import jsonloads_dict
@@ -132,27 +125,17 @@ class PremiumCapabilities(TypedDict):
 
 
 class UserLimitType(Enum):
-    """Enum of the different limits enforced by tiers"""
+    """Enum of the different limits that used to be enforced by tiers"""
     HISTORY_EVENTS = 'history_events_limit'
     PNL_EVENTS = 'pnl_events_limit'
     PNL_REPORTS_LOOKUP = 'reports_lookup_limit'
     ETH_STAKED = 'eth_staked_limit'
 
-    def get_free_limit(self) -> int:
-        """Get the free limit for a specific limit type
-        May raise:
-        - NotImplementedError if the type is not yet supported.
-        """
-        if self == UserLimitType.HISTORY_EVENTS:
-            return FREE_HISTORY_EVENTS_LIMIT
-        if self == UserLimitType.PNL_EVENTS:
-            return FREE_PNL_EVENTS_LIMIT
-        if self == UserLimitType.PNL_REPORTS_LOOKUP:
-            return FREE_REPORTS_LOOKUP_LIMIT
-        if self == UserLimitType.ETH_STAKED:
-            return 0  # ETH staking is not available on free tier
 
-        raise NotImplementedError(f'Unknown limit type: {self}. This indicates a bug in the code.')
+# Sentinel for "no limit". The frontend and the DB layer both read -1 as unlimited.
+UNLIMITED: Final = -1
+# Tier shown for a session that has no rotki.com subscription. Every local feature is unlocked.
+LOCAL_TIER_NAME: Final = 'Local'
 
 
 COMPONENTS_VERSION: Final = 16
@@ -220,69 +203,41 @@ def _get_rotki_base_url() -> str:
     return rotki_base_url
 
 
-def fetch_capability_unlocks() -> dict[str, str]:
-    """Fetch capability unlock tiers from the public nest endpoint."""
-    try:
-        response = requests.get(
-            f'https://{_get_rotki_base_url()}/nest/1/limits/unlocks',
-            timeout=ROTKEHLCHEN_SERVER_TIMEOUT,
-        )
-    except requests.exceptions.RequestException as e:
-        msg = f'Could not connect to rotki server due to {e!s}'
-        log.error(msg)
-        raise RemoteError(msg) from e
+def build_local_capabilities(
+        current_tier: str,
+        limit_of_devices: int,
+        max_backup_size_mb: int,
+) -> PremiumCapabilities:
+    """Build the capabilities payload with every local feature enabled and unlimited.
 
-    result = _process_dict_response(
-        response=response,
-        status_codes=(HTTPStatus.OK,),
+    Only `limit_of_devices` and `max_backup_size_mb` still depend on the rotki.com
+    subscription, since devices and cloud backups are resources hosted by rotki.com.
+    """
+    enabled = PremiumFeatureCapability(enabled=True, minimum_tier=None)
+    return PremiumCapabilities(
+        current_tier=current_tier,
+        limit_of_devices=limit_of_devices,
+        pnl_events_limit=UNLIMITED,
+        max_backup_size_mb=max_backup_size_mb,
+        history_events_limit=UNLIMITED,
+        reports_lookup_limit=UNLIMITED,
+        eth_staked_limit=UNLIMITED,
+        eth_staking_view=enabled,
+        graphs_view=enabled,
+        event_analysis_view=enabled,
+        asset_movement_matching=enabled,
+        gnosispay=enabled,
+        monerium=enabled,
+        mcp=enabled,
     )
-    if not isinstance(unlocks := result.get('unlocks'), dict):
-        msg = 'Problem connecting to rotki server. limits/unlocks response missing unlocks key'
-        log.error(f'{msg}. Response was {result}')
-        raise RemoteError(msg)
-
-    return cast('dict[str, str]', unlocks)
 
 
 def get_free_capabilities() -> PremiumCapabilities:
-    """Get capabilities payload for free users."""
-    unlocks = fetch_capability_unlocks()
-    return PremiumCapabilities(
-        current_tier='Free',
+    """Get the capabilities payload for a session without a rotki.com subscription."""
+    return build_local_capabilities(
+        current_tier=LOCAL_TIER_NAME,
         limit_of_devices=0,
-        pnl_events_limit=FREE_PNL_EVENTS_LIMIT,
         max_backup_size_mb=0,
-        history_events_limit=FREE_HISTORY_EVENTS_LIMIT,
-        reports_lookup_limit=FREE_REPORTS_LOOKUP_LIMIT,
-        eth_staked_limit=UserLimitType.ETH_STAKED.get_free_limit(),
-        eth_staking_view=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get('eth_staking_view'),
-        ),
-        graphs_view=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get('graphs_view'),
-        ),
-        event_analysis_view=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get('event_analysis_view'),
-        ),
-        asset_movement_matching=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get('asset_movement_matching'),
-        ),
-        gnosispay=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get(GNOSIS_PAY_CAPABILITY),
-        ),
-        monerium=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get(MONERIUM_CAPABILITY),
-        ),
-        mcp=PremiumFeatureCapability(
-            enabled=False,
-            minimum_tier=unlocks.get(MCP_CAPABILITY),
-        ),
     )
 
 
@@ -1033,44 +988,13 @@ class Premium:
         return self._cached_limits
 
     def get_capabilities(self) -> PremiumCapabilities:
+        """Local features are unlocked whatever the tier. Only the resources hosted
+        by rotki.com (devices and cloud backups) come from the subscription limits."""
         limits = self.fetch_limits()
-        unlocks = limits.get('unlocks', {})
-        return PremiumCapabilities(
-            current_tier=limits.get('current_tier', 'Free'),
+        return build_local_capabilities(
+            current_tier=limits.get('current_tier', LOCAL_TIER_NAME),
             limit_of_devices=limits.get('limit_of_devices', 0),
-            pnl_events_limit=limits.get('pnl_events_limit', 0),
             max_backup_size_mb=limits.get('max_backup_size_mb', 0),
-            history_events_limit=limits.get('history_events_limit', 0),
-            reports_lookup_limit=limits.get('reports_lookup_limit', 0),
-            eth_staked_limit=limits.get('eth_staked_limit', 0),
-            eth_staking_view=PremiumFeatureCapability(
-                enabled=limits.get('eth_staking_view', False),
-                minimum_tier=unlocks.get('eth_staking_view'),
-            ),
-            graphs_view=PremiumFeatureCapability(
-                enabled=limits.get('graphs_view', False),
-                minimum_tier=unlocks.get('graphs_view'),
-            ),
-            event_analysis_view=PremiumFeatureCapability(
-                enabled=limits.get('event_analysis_view', False),
-                minimum_tier=unlocks.get('event_analysis_view'),
-            ),
-            asset_movement_matching=PremiumFeatureCapability(
-                enabled=limits.get('asset_movement_matching', False),
-                minimum_tier=unlocks.get('asset_movement_matching'),
-            ),
-            gnosispay=PremiumFeatureCapability(
-                enabled=limits.get(GNOSIS_PAY_CAPABILITY, False),
-                minimum_tier=unlocks.get(GNOSIS_PAY_CAPABILITY),
-            ),
-            monerium=PremiumFeatureCapability(
-                enabled=limits.get(MONERIUM_CAPABILITY, False),
-                minimum_tier=unlocks.get(MONERIUM_CAPABILITY),
-            ),
-            mcp=PremiumFeatureCapability(
-                enabled=limits.get(MCP_CAPABILITY, False),
-                minimum_tier=unlocks.get(MCP_CAPABILITY),
-            ),
         )
 
     def watcher_query(
@@ -1126,45 +1050,42 @@ def premium_create_and_verify(
     return premium
 
 
-def has_premium_check(premium: Premium | None) -> bool:
-    """Helper function to check if we have premium"""
-    return premium is not None and premium.is_active()
+def has_premium_check(premium: Premium | None) -> bool:  # pylint: disable=unused-argument
+    """Whether the features that run locally are unlocked.
+
+    Always True: every feature computed on this machine is available without a
+    subscription. Code that talks to rotki.com (sync, backups, devices, watchers)
+    must check `premium is not None` itself instead of calling this.
+    """
+    return True
 
 
-def get_user_limit(premium: Premium | None, limit_type: UserLimitType) -> tuple[int, bool]:
-    """Helper function to get a specific user limit and premium status
+def get_user_limit(
+        premium: Premium | None,  # pylint: disable=unused-argument
+        limit_type: UserLimitType,  # pylint: disable=unused-argument
+) -> tuple[int, bool]:
+    """Get a user limit and whether the local features are unlocked.
+
+    Every local limit is lifted, so this always returns `UNLIMITED`.
 
     Returns:
         tuple[int, bool]: (limit_value, has_premium)
     """
-    if premium is None or premium.is_active() is False:
-        log.debug(f'No premium subscription or inactive, returning free limit for {limit_type}')
-        return limit_type.get_free_limit(), False
-
-    try:
-        limits = premium.fetch_limits()
-        return limits[limit_type.value], True
-    except (RemoteError, PremiumAuthenticationError, KeyError) as e:
-        msg = str(e)
-        if isinstance(e, KeyError):  # that's a bad error that needs action on our side
-            msg = f'missing key {msg} from the premium limits response. Report this to rotki devs.'
-            premium.msg_aggregator.add_error(  # make sure users see this error
-                msg,
-                classification=BadData(record=UserMessageRecord.PREMIUM_LIMITS, error=msg),
-            )
-
-        log.error(f'Failed to fetch limits from server: {e}. Falling back to free limits')
-        return limit_type.get_free_limit(), False
+    return UNLIMITED, True
 
 
-def has_premium_capability(premium: Premium | None, capability_name: str) -> bool:
-    """Helper function to check if an active premium user has a specific capability."""
-    if premium is None or premium.is_active() is False:
-        return False
+def to_db_limit(limit: int) -> int | None:
+    """Translate a user limit to the DB layer's, which spells "no limit" as None.
 
-    try:
-        limits = premium.fetch_limits()
-        return bool(limits.get(capability_name, False))
-    except (RemoteError, PremiumAuthenticationError) as e:
-        log.error(f'Failed to fetch capabilities from server: {e}. Falling back to free tier')
-        return False
+    Passing UNLIMITED (-1) down instead would still return every row, but through
+    the slower windowed `LIMIT ?` query meant for capped results.
+    """
+    return None if limit == UNLIMITED else limit
+
+
+def has_premium_capability(
+        premium: Premium | None,  # pylint: disable=unused-argument
+        capability_name: str,  # pylint: disable=unused-argument
+) -> bool:
+    """Whether a capability is available. Every local capability is unlocked."""
+    return True

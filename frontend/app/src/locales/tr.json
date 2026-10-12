@@ -1,11 +1,6 @@
 {
   "about": {
     "app_version": "Uygulama sürümü:",
-    "components": {
-      "build": "Derleme:",
-      "title": "Premium bileşenleri",
-      "version": "Premium sürümü:"
-    },
     "copy_data_directory_tooltip": "Veri dizinini kopyala",
     "copy_information_tooltip": "Uygulama bilgilerini kopyala",
     "data_directory": "Veri dizini:",
@@ -5424,12 +5419,6 @@
     },
     "title": "Premium cihazlar"
   },
-  "premium_loading_failed": {
-    "description": "Bu, Premium bileşen servisinde bir sorun olduğuna işaret ediyor olabilir.",
-    "open_issue": "Sorun devam ederse sorun takip sistemimizde yeni bir kayıt açın.",
-    "title": "Bileşen yüklenirken bir hata oluştu.",
-    "try_again": "Lütfen daha sonra tekrar deneyin."
-  },
   "premium_lock": {
     "tooltip": "rotki Premium planıyla kullanılabilir"
   },
@@ -5448,9 +5437,7 @@
       "sync_hint": "Verileriniz rotki sunucusuyla senkronize edilmeden önce şifrelenir ve sizden başka hiç kimse tarafından okunamaz."
     },
     "chart_limit": {
-      "description": "Premium abonelikle rotki'nin tüm potansiyelini keşfedin.",
-      "statistic": "İstatistik görünümü kullanılamıyor",
-      "title": "Grafikler kullanılamıyor"
+      "description": "Premium abonelikle rotki'nin tüm potansiyelini keşfedin."
     },
     "cloud_backup_unavailable": "Bulut yedekleme mevcut planınızda kullanılamıyor. {link} ve bulut senkronizasyonunu etkinleştirin.",
     "cloud_backup_upgrade_link": "Aboneliğinizi yükseltin",
@@ -6385,7 +6372,6 @@
   "task_manager": {
     "error": "[{taskId}] '{title}' görevi işlenirken bir hata oluştu: {error}"
   },
-  "theme_manager_lock": "Tema yöneticisi mevcut planınızda kullanılamıyor",
   "theme_switch": {
     "auto": "Otomatik (cihaz temasını algıla)",
     "dark": "Koyu",

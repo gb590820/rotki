@@ -6,11 +6,10 @@ import AssetLocations from '@/modules/assets/AssetLocations.vue';
 import AssetValueRow from '@/modules/assets/AssetValueRow.vue';
 import AssetBalances from '@/modules/balances/AssetBalances.vue';
 import { NoteLocation } from '@/modules/core/common/notes';
-import { AssetAmountAndValueOverTime } from '@/modules/premium/premium';
 import AssetIcon from '@/modules/shell/components/AssetIcon.vue';
 import HashLink from '@/modules/shell/components/HashLink.vue';
 import TablePageLayout from '@/modules/shell/layout/TablePageLayout.vue';
-import AssetAmountAndValuePlaceholder from '@/modules/statistics/AssetAmountAndValuePlaceholder.vue';
+import AssetAmountAndValueOverTime from '@/modules/statistics/graphs/AssetAmountAndValueOverTime.vue';
 import { useAssetDetail } from '@/pages/assets/use-asset-detail';
 
 definePage({
@@ -35,7 +34,6 @@ const { t } = useI18n({ useScope: 'global' });
 
 const {
   asset,
-  collectionAssetWithPrice,
   collectionBalance,
   collectionId,
   contractInfo,
@@ -45,7 +43,6 @@ const {
   loadingIgnore,
   loadingSpam,
   loadingWhitelist,
-  premium,
   toggleIgnoreAsset,
   toggleSpam,
   toggleWhitelistAsset,
@@ -138,13 +135,9 @@ const {
     />
 
     <AssetAmountAndValueOverTime
-      v-if="premium"
       :asset="identifier"
-      :price-asset="collectionAssetWithPrice"
       :collection-id="collectionId"
     />
-
-    <AssetAmountAndValuePlaceholder v-else />
 
     <AssetLocations
       v-if="!isCollectionParent"

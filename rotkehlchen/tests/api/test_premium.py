@@ -8,9 +8,16 @@ import machineid
 import pytest
 import requests
 
-from rotkehlchen.accounting.constants import FREE_PNL_EVENTS_LIMIT, FREE_REPORTS_LOOKUP_LIMIT
-from rotkehlchen.constants.limits import FREE_HISTORY_EVENTS_LIMIT
-from rotkehlchen.premium.premium import get_free_capabilities
+from rotkehlchen.premium.premium import (
+    LOCAL_TIER_NAME,
+    UNLIMITED,
+    UserLimitType,
+    get_free_capabilities,
+    get_user_limit,
+    has_premium_capability,
+    has_premium_check,
+    to_db_limit,
+)
 from rotkehlchen.tests.utils.api import (
     api_url_for,
     assert_error_response,
@@ -25,6 +32,15 @@ if TYPE_CHECKING:
     from rotkehlchen.api.server import APIServer
 
 CURRENT_DEVICE_ID = machineid.hashed_id('yabirgb')
+CAPABILITY_NAMES = (
+    'eth_staking_view',
+    'graphs_view',
+    'event_analysis_view',
+    'asset_movement_matching',
+    'gnosispay',
+    'monerium',
+    'mcp',
+)
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [True])
@@ -302,7 +318,8 @@ def test_delete_current_device_fails(rotkehlchen_api_server: APIServer) -> None:
 
 @pytest.mark.parametrize('start_with_valid_premium', [True])
 def test_get_premium_capabilities(rotkehlchen_api_server: APIServer) -> None:
-    """Test the GET /premium/capabilities endpoint."""
+    """A subscriber gets every local feature unlocked and unlimited whatever its tier,
+    while devices and cloud backup sizes still come from the rotki.com limits."""
     rotki = rotkehlchen_api_server.rest_api.rotkehlchen
     assert rotki.premium is not None
     with patch.object(
@@ -323,15 +340,7 @@ def test_get_premium_capabilities(rotkehlchen_api_server: APIServer) -> None:
             'gnosispay': True,
             'monerium': False,
             'mcp': True,
-            'unlocks': {
-                'eth_staking_view': 'Basic',
-                'graphs_view': 'Basic',
-                'event_analysis_view': 'Basic',
-                'asset_movement_matching': 'Basic',
-                'gnosispay': 'Advanced',
-                'monerium': 'Advanced',
-                'mcp': 'Basic',
-            },
+            'unlocks': {'monerium': 'Advanced'},
         },
     ):
         response = requests.get(api_url_for(
@@ -340,151 +349,69 @@ def test_get_premium_capabilities(rotkehlchen_api_server: APIServer) -> None:
         ))
         result = assert_proper_sync_response_with_result(response)
 
-        assert result == {
-            'current_tier': 'Advanced',
-            'limit_of_devices': 4,
-            'pnl_events_limit': 100000,
-            'max_backup_size_mb': 600,
-            'history_events_limit': 100000,
-            'reports_lookup_limit': 300,
-            'eth_staked_limit': 384,
-            'eth_staking_view': {
-                'enabled': True,
-                'minimum_tier': 'Basic',
-            },
-            'graphs_view': {
-                'enabled': True,
-                'minimum_tier': 'Basic',
-            },
-            'event_analysis_view': {
-                'enabled': False,
-                'minimum_tier': 'Basic',
-            },
-            'asset_movement_matching': {
-                'enabled': True,
-                'minimum_tier': 'Basic',
-            },
-            'gnosispay': {
-                'enabled': True,
-                'minimum_tier': 'Advanced',
-            },
-            'monerium': {
-                'enabled': False,
-                'minimum_tier': 'Advanced',
-            },
-            'mcp': {
-                'enabled': True,
-                'minimum_tier': 'Basic',
-            },
-        }
+    assert result == _expected_local_capabilities(
+        current_tier='Advanced',
+        limit_of_devices=4,
+        max_backup_size_mb=600,
+    )
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [False])
 def test_get_free_user_capabilities(rotkehlchen_api_server: APIServer) -> None:
-    """Test the GET /premium/capabilities endpoint for a free user."""
+    """A session without subscription gets every local feature, without asking rotki.com."""
     rotki = rotkehlchen_api_server.rest_api.rotkehlchen
     assert rotki.premium is None
-    with patch(
-        'rotkehlchen.api.rest.get_free_capabilities',
-        return_value={
-            'current_tier': 'Free',
-            'limit_of_devices': 0,
-            'pnl_events_limit': FREE_PNL_EVENTS_LIMIT,
-            'max_backup_size_mb': 0,
-            'history_events_limit': FREE_HISTORY_EVENTS_LIMIT,
-            'reports_lookup_limit': FREE_REPORTS_LOOKUP_LIMIT,
-            'eth_staked_limit': 0,
-            'eth_staking_view': {
-                'enabled': False,
-                'minimum_tier': 'Basic',
-            },
-            'graphs_view': {
-                'enabled': False,
-                'minimum_tier': 'lite',
-            },
-            'event_analysis_view': {
-                'enabled': False,
-                'minimum_tier': 'lite',
-            },
-            'asset_movement_matching': {
-                'enabled': False,
-                'minimum_tier': 'Basic',
-            },
-            'gnosispay': {
-                'enabled': False,
-                'minimum_tier': 'Advanced',
-            },
-            'monerium': {
-                'enabled': False,
-                'minimum_tier': 'Advanced',
-            },
-        },
-    ):
+    with patch('rotkehlchen.premium.premium.requests') as mock_requests:
         response = requests.get(api_url_for(
             rotkehlchen_api_server,
             'premiumcapabilitiesresource',
         ))
         result = assert_proper_sync_response_with_result(response)
 
-        assert result == {
-            'current_tier': 'Free',
-            'limit_of_devices': 0,
-            'pnl_events_limit': FREE_PNL_EVENTS_LIMIT,
-            'max_backup_size_mb': 0,
-            'history_events_limit': FREE_HISTORY_EVENTS_LIMIT,
-            'reports_lookup_limit': FREE_REPORTS_LOOKUP_LIMIT,
-            'eth_staked_limit': 0,
-            'eth_staking_view': {
-                'enabled': False,
-                'minimum_tier': 'Basic',
-            },
-            'graphs_view': {
-                'enabled': False,
-                'minimum_tier': 'lite',
-            },
-            'event_analysis_view': {
-                'enabled': False,
-                'minimum_tier': 'lite',
-            },
-            'asset_movement_matching': {
-                'enabled': False,
-                'minimum_tier': 'Basic',
-            },
-            'gnosispay': {
-                'enabled': False,
-                'minimum_tier': 'Advanced',
-            },
-            'monerium': {
-                'enabled': False,
-                'minimum_tier': 'Advanced',
-            },
-        }
+    assert mock_requests.mock_calls == []
+    assert result == _expected_local_capabilities(
+        current_tier=LOCAL_TIER_NAME,
+        limit_of_devices=0,
+        max_backup_size_mb=0,
+    )
 
 
-def test_free_capabilities_expose_every_unlock() -> None:
-    """get_free_capabilities() must surface a block for each known capability.
-
-    The endpoint test above patches this function out, so without this test the real
-    implementation never runs and a capability missing from it goes unnoticed.
-    """
-    unlocks = {
-        'eth_staking_view': 'Supporter',
-        'graphs_view': 'Basic',
-        'event_analysis_view': 'Basic',
-        'asset_movement_matching': 'Basic',
-        'gnosispay': 'Basic',
-        'monerium': 'Basic',
-        'mcp': 'Basic',
-    }
-    with patch(
-        'rotkehlchen.premium.premium.fetch_capability_unlocks',
-        return_value=unlocks,
-    ):
-        capabilities = get_free_capabilities()
-
-    assert capabilities['current_tier'] == 'Free'
-    for name, minimum_tier in unlocks.items():
+def test_free_capabilities_expose_every_capability() -> None:
+    """get_free_capabilities() must surface an enabled block for each known capability."""
+    capabilities = get_free_capabilities()
+    for name in CAPABILITY_NAMES:
         assert capabilities[name] == {  # type: ignore[literal-required]  # keys are capability names
-            'enabled': False,
-            'minimum_tier': minimum_tier,
-        }, f'free capability {name} missing or not matching its unlock tier'
+            'enabled': True,
+            'minimum_tier': None,
+        }, f'capability {name} missing or not enabled'
+
+
+def test_local_features_are_unlocked_without_subscription() -> None:
+    """The helpers every local feature gate goes through all answer "unlocked"."""
+    assert has_premium_check(premium=None) is True
+    for capability_name in CAPABILITY_NAMES:
+        assert has_premium_capability(premium=None, capability_name=capability_name) is True
+    for limit_type in UserLimitType:
+        assert get_user_limit(premium=None, limit_type=limit_type) == (UNLIMITED, True)
+
+
+def test_to_db_limit() -> None:
+    """The DB layer spells "no limit" as None, so UNLIMITED must not reach it as -1"""
+    assert to_db_limit(UNLIMITED) is None
+    assert to_db_limit(10) == 10
+
+
+def _expected_local_capabilities(
+        current_tier: str,
+        limit_of_devices: int,
+        max_backup_size_mb: int,
+) -> dict:
+    return {
+        'current_tier': current_tier,
+        'limit_of_devices': limit_of_devices,
+        'pnl_events_limit': UNLIMITED,
+        'max_backup_size_mb': max_backup_size_mb,
+        'history_events_limit': UNLIMITED,
+        'reports_lookup_limit': UNLIMITED,
+        'eth_staked_limit': UNLIMITED,
+    } | {name: {'enabled': True, 'minimum_tier': None} for name in CAPABILITY_NAMES}

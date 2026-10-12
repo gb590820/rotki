@@ -1,10 +1,6 @@
 {
   "about": {
-    "app_version": "Version de la App:",
-    "components": {
-      "title": "Componenes Premium",
-      "version": "Versión Premium:"
-    }
+    "app_version": "Version de la App:"
   },
   "account_balances": {
     "confirm_delete": {

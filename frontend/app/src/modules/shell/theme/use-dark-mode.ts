@@ -10,7 +10,7 @@ interface ColorScheme { DEFAULT: string; lighter: string; darker: string }
 export const useDarkMode = createSharedComposable(() => {
   const { config, isDark, setThemeConfig, switchThemeScheme } = useRotkiTheme();
   const { darkTheme, lightTheme } = useThemeSettings();
-  const premium = usePremium();
+  const unlocked = usePremium();
 
   const updateDarkMode = (enabled: boolean): void => {
     switchThemeScheme(enabled ? ThemeMode.dark : ThemeMode.light);
@@ -40,8 +40,8 @@ export const useDarkMode = createSharedComposable(() => {
     setThemeConfig({ ...conf, [variant]: variantConf });
   };
 
-  const usedDarkTheme = computed(() => (get(premium) ? get(darkTheme) : DARK_COLORS));
-  const usedLightTheme = computed(() => (get(premium) ? get(lightTheme) : LIGHT_COLORS));
+  const usedDarkTheme = computed(() => (get(unlocked) ? get(darkTheme) : DARK_COLORS));
+  const usedLightTheme = computed(() => (get(unlocked) ? get(lightTheme) : LIGHT_COLORS));
 
   const usedTheme = computed(() => (get(isDark) ? get(usedDarkTheme) : get(usedLightTheme)));
 

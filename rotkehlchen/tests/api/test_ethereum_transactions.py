@@ -24,7 +24,6 @@ from rotkehlchen.chain.gnosis.modules.gnosis_pay.constants import CPT_GNOSIS_PAY
 from rotkehlchen.concurrency import wait
 from rotkehlchen.constants import ONE
 from rotkehlchen.constants.assets import A_BTC, A_DAI, A_ETH, A_EUR, A_MKR, A_USDT, A_WETH
-from rotkehlchen.constants.limits import FREE_HISTORY_EVENTS_LIMIT
 from rotkehlchen.db.cache import DBCacheDynamic
 from rotkehlchen.db.constants import HistoryMappingState
 from rotkehlchen.db.evmtx import DBEvmTx
@@ -40,7 +39,7 @@ from rotkehlchen.errors.misc import RemoteError
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.events.structures.evm_event import EvmEvent
 from rotkehlchen.history.events.structures.types import HistoryEventSubType, HistoryEventType
-from rotkehlchen.premium.premium import GNOSIS_PAY_CAPABILITY, MONERIUM_CAPABILITY
+from rotkehlchen.premium.premium import GNOSIS_PAY_CAPABILITY, MONERIUM_CAPABILITY, UNLIMITED
 from rotkehlchen.tests.utils.api import (
     api_url_for,
     assert_error_response,
@@ -53,7 +52,6 @@ from rotkehlchen.tests.utils.api import (
 from rotkehlchen.tests.utils.checks import assert_serialized_lists_equal
 from rotkehlchen.tests.utils.constants import (
     GRAPH_QUERY_CRED,
-    TEST_PREMIUM_HISTORY_EVENTS_LIMIT,
     TXHASH_HEX_TO_BYTES,
 )
 from rotkehlchen.tests.utils.ethereum import (
@@ -223,7 +221,7 @@ def query_events(
         json: dict[str, Any],
         expected_num_with_grouping: int,
         expected_totals_with_grouping: int,
-        entries_limit: int = TEST_PREMIUM_HISTORY_EVENTS_LIMIT,
+        entries_limit: int = UNLIMITED,
 ) -> list[dict[str, Any]]:
     """Query history events as frontend would have, with grouped identifiers
 
@@ -1131,7 +1129,7 @@ def test_events_filter_params(
         contained_in_msg='{"counterparties": ["List cant be empty"]}',
     )
 
-    entries_limit = TEST_PREMIUM_HISTORY_EVENTS_LIMIT if start_with_valid_premium else FREE_HISTORY_EVENTS_LIMIT  # noqa: E501
+    entries_limit = UNLIMITED
     returned_events = query_events(
         rotkehlchen_api_server,
         json={
@@ -1276,7 +1274,6 @@ def test_ignored_assets(
         },
         expected_num_with_grouping=3,
         expected_totals_with_grouping=3,
-        entries_limit=1000,
     )
     expected = generate_events_response([event4, event1, event2, event3], has_ignored_assets=[True, True, True, False])  # noqa: E501
     assert returned_events == expected
@@ -1286,7 +1283,6 @@ def test_ignored_assets(
         json={'location': 'ethereum'},
         expected_num_with_grouping=2,
         expected_totals_with_grouping=3,
-        entries_limit=1000,
     )
     # event1's group has ignored BTC asset, event3's group has no ignored assets
     expected = generate_events_response([event1, event3], has_ignored_assets=[True, False])
@@ -1930,7 +1926,7 @@ def test_monerium_gnosis_pay_events_update(
         start_with_valid_premium: bool,
 ) -> None:
     """Test that monerium and gnosis pay event are properly updated when decoding/redecoding.
-    Also check that this functionality is only available for valid premium users.
+    Also check that this functionality works with or without a subscription.
     """
     rotki = rotkehlchen_api_server.rest_api.rotkehlchen
     if start_with_valid_premium:
@@ -2060,12 +2056,8 @@ def test_monerium_gnosis_pay_events_update(
             json={'chain': 'arbitrum_one', 'tx_refs': [str(monerium_event.tx_ref)]},
         ))
 
-        if start_with_valid_premium:
-            assert monerium_instance_mock.update_events.call_count == 1
-            assert gnosis_pay_instance_mock.update_events.call_count == 2  # because we individually trigger the decoding for two transactions  # noqa: E501
-        else:
-            assert monerium_instance_mock.update_events.call_count == 0
-            assert gnosis_pay_instance_mock.update_events.call_count == 0
+        assert monerium_instance_mock.update_events.call_count == 1
+        assert gnosis_pay_instance_mock.update_events.call_count == 2  # because we individually trigger the decoding for two transactions  # noqa: E501
 
 
 @pytest.mark.parametrize('number_of_eth_accounts', [0])

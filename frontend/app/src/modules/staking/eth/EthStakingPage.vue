@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import AccountFormApiKeyAlert from '@/modules/accounts/management/AccountFormApiKeyAlert.vue';
 import AccountFormApiKeyMenu from '@/modules/accounts/management/AccountFormApiKeyMenu.vue';
-import { EthStaking } from '@/modules/premium/premium';
 import { useExternalApiKeys } from '@/modules/settings/api-keys/external/use-external-api-keys';
 import ModuleNotActive from '@/modules/settings/modules/ModuleNotActive.vue';
 import { useSetting } from '@/modules/settings/use-setting';
@@ -9,6 +8,7 @@ import TablePageLayout from '@/modules/shell/layout/TablePageLayout.vue';
 import EthStakingFilterBar from './components/EthStakingFilterBar.vue';
 import EthStakingHeaderActions from './components/EthStakingHeaderActions.vue';
 import EthStakingPagePlaceholder from './components/EthStakingPagePlaceholder.vue';
+import EthStakingView from './performance/EthStakingView.vue';
 import { useEthStakingAccess } from './use-eth-staking-access';
 import { useEthStakingPerformance } from './use-eth-staking-performance';
 import { useEthStakingRefresh } from './use-eth-staking-refresh';
@@ -110,9 +110,9 @@ onBeforeMount(async () => {
         :service="blockingApiKeyService"
       />
 
-      <EthStaking
+      <EthStakingView
         v-model:performance-pagination="performancePagination"
-        v-model:filter="modelFilter"
+        :filter="modelFilter"
         :refreshing="refreshing"
         :total="total"
         :accounts="modelSelection"
@@ -125,7 +125,7 @@ onBeforeMount(async () => {
             v-model:filter="modelFilter"
           />
         </template>
-      </EthStaking>
+      </EthStakingView>
     </TablePageLayout>
   </div>
 </template>

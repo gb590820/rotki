@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useBalancesLoading } from '@/modules/balances/use-balance-loading';
-import { usePremium } from '@/modules/premium/use-premium';
+import { useSubscription } from '@/modules/premium/use-subscription';
 import { SYNC_DOWNLOAD, SYNC_UPLOAD, type SyncAction } from '@/modules/session/sync';
 import { useSync } from '@/modules/session/use-session-sync';
 
@@ -15,7 +15,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n({ useScope: 'global' });
 
-const premium = usePremium();
+const subscribed = useSubscription();
 const UPLOAD: SyncAction = SYNC_UPLOAD;
 const DOWNLOAD: SyncAction = SYNC_DOWNLOAD;
 
@@ -38,7 +38,7 @@ const { loadingBalancesAndDetection: loading } = useBalancesLoading();
           :variant="uploadStatus ? 'default' : 'outlined'"
           color="primary"
           class="w-full"
-          :disabled="!premium || pending || loading || disabled"
+          :disabled="!subscribed || pending || loading || disabled"
           @click="action(UPLOAD)"
         >
           <template #prepend>
@@ -59,7 +59,7 @@ const { loadingBalancesAndDetection: loading } = useBalancesLoading();
           variant="outlined"
           color="primary"
           class="w-full"
-          :disabled="!premium || pending || !!uploadStatus || loading || disabled"
+          :disabled="!subscribed || pending || !!uploadStatus || loading || disabled"
           @click="action(DOWNLOAD)"
         >
           <template #prepend>

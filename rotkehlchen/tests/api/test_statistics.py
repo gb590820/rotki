@@ -15,8 +15,10 @@ from rotkehlchen.chain.decoding.constants import CPT_GAS
 from rotkehlchen.chain.ethereum.modules.ens.constants import CPT_ENS
 from rotkehlchen.constants.assets import A_BTC, A_ETH, A_ETH2, A_EUR, A_SOL, A_USDC
 from rotkehlchen.constants.misc import ONE
+from rotkehlchen.constants.timing import DAY_IN_SECONDS
 from rotkehlchen.db.evmtx import DBEvmTx
 from rotkehlchen.db.history_events import DBHistoryEvents
+from rotkehlchen.db.utils import LocationData
 from rotkehlchen.fval import FVal
 from rotkehlchen.history.events.structures.base import HistoryEvent
 from rotkehlchen.history.events.structures.evm_event import EvmEvent
@@ -101,6 +103,25 @@ def test_query_statistics_netvalue(
     assert len(result['data']) == 1
 
 
+@pytest.mark.freeze_time('2026-06-05 04:27:20 GMT')
+@pytest.mark.parametrize('start_with_valid_premium', [False])
+def test_query_statistics_netvalue_whole_history(rotkehlchen_api_server: APIServer) -> None:
+    """Net value data is not cut to the last 14 days without a subscription"""
+    db = rotkehlchen_api_server.rest_api.rotkehlchen.data.db
+    one_year_ago, now = Timestamp(ts_now() - DAY_IN_SECONDS * 365), ts_now()
+    with db.user_write() as write_cursor:
+        db.add_multiple_location_data(write_cursor=write_cursor, location_data=[
+            LocationData(time=one_year_ago, location=(total := Location.TOTAL.serialize_for_db()), usd_value='10'),  # noqa: E501
+            LocationData(time=now, location=total, usd_value='20'),
+        ])
+
+    result = assert_proper_sync_response_with_result(requests.get(
+        api_url_for(rotkehlchen_api_server, 'statisticsnetvalueresource'),
+    ))
+    assert result['times'] == [one_year_ago, now]
+    assert result['data'] == ['10', '20']
+
+
 @pytest.mark.freeze_time('2026-06-05 04:27:20 GMT', tick=True)
 @pytest.mark.vcr
 @pytest.mark.parametrize('number_of_eth_accounts', [2])
@@ -139,21 +160,14 @@ def test_query_statistics_asset_balance(
         ),
         json={'asset': 'ETH'},
     )
-    if start_with_valid_premium:
-        result = assert_proper_sync_response_with_result(response)
-        assert len(result) == 1
-        entry = result[0]
-        assert len(entry) == 4
-        assert FVal(entry['amount']) == get_asset_balance_total(A_ETH, setup)
-        assert entry['category'] == 'asset'
-        assert entry['time'] >= start_time
-        assert entry['usd_value'] is not None
-    else:
-        assert_error_response(
-            response=response,
-            contained_in_msg='logged in user testuser does not have a premium subscription',
-            status_code=HTTPStatus.FORBIDDEN,
-        )
+    result = assert_proper_sync_response_with_result(response)
+    assert len(result) == 1
+    entry = result[0]
+    assert len(entry) == 4
+    assert FVal(entry['amount']) == get_asset_balance_total(A_ETH, setup)
+    assert entry['category'] == 'asset'
+    assert entry['time'] >= start_time
+    assert entry['usd_value'] is not None
 
     # and now test that statistics work fine for BTC, with given time range
     response = requests.post(
@@ -162,21 +176,14 @@ def test_query_statistics_asset_balance(
             'statisticsassetbalanceresource',
         ), json={'from_timestamp': 0, 'to_timestamp': start_time + 60000, 'asset': 'BTC'},
     )
-    if start_with_valid_premium:
-        result = assert_proper_sync_response_with_result(response)
-        assert len(result) == 1
-        entry = result[0]
-        assert len(entry) == 4
-        assert FVal(entry['amount']) == get_asset_balance_total(A_BTC, setup)
-        assert entry['time'] >= start_time
-        assert entry['category'] == 'asset'
-        assert entry['usd_value'] is not None
-    else:
-        assert_error_response(
-            response=response,
-            contained_in_msg='logged in user testuser does not have a premium subscription',
-            status_code=HTTPStatus.FORBIDDEN,
-        )
+    result = assert_proper_sync_response_with_result(response)
+    assert len(result) == 1
+    entry = result[0]
+    assert len(entry) == 4
+    assert FVal(entry['amount']) == get_asset_balance_total(A_BTC, setup)
+    assert entry['time'] >= start_time
+    assert entry['category'] == 'asset'
+    assert entry['usd_value'] is not None
 
     # finally test that if the time range is not including the saved balances we get nothing back
     response = requests.post(
@@ -185,15 +192,8 @@ def test_query_statistics_asset_balance(
             'statisticsassetbalanceresource',
         ), json={'from_timestamp': 0, 'to_timestamp': start_time - 1, 'asset': 'BTC'},
     )
-    if start_with_valid_premium:
-        result = assert_proper_sync_response_with_result(response)
-        assert len(result) == 0
-    else:
-        assert_error_response(
-            response=response,
-            contained_in_msg='logged in user testuser does not have a premium subscription',
-            status_code=HTTPStatus.FORBIDDEN,
-        )
+    result = assert_proper_sync_response_with_result(response)
+    assert len(result) == 0
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [True])
@@ -310,23 +310,16 @@ def test_query_statistics_value_distribution(
 
     def assert_okay_by_location(response: requests.Response) -> None:
         """Helper function to run next query and its assertion twice"""
-        if start_with_valid_premium:
-            result = assert_proper_sync_response_with_result(response)
-            assert len(result) == 6
-            locations = {'poloniex', 'binance', 'banks', 'blockchain', 'total', 'kraken'}
-            for entry in result:
-                assert len(entry) == 3
-                assert entry['time'] >= start_time
-                assert entry['usd_value'] is not None
-                assert entry['location'] in locations
-                locations.remove(entry['location'])
-            assert len(locations) == 0
-        else:
-            assert_error_response(
-                response=response,
-                contained_in_msg='logged in user testuser does not have a premium subscription',
-                status_code=HTTPStatus.FORBIDDEN,
-            )
+        result = assert_proper_sync_response_with_result(response)
+        assert len(result) == 6
+        locations = {'poloniex', 'binance', 'banks', 'blockchain', 'total', 'kraken'}
+        for entry in result:
+            assert len(entry) == 3
+            assert entry['time'] >= start_time
+            assert entry['usd_value'] is not None
+            assert entry['location'] in locations
+            locations.remove(entry['location'])
+        assert len(locations) == 0
 
     # and now test that statistics work fine for distribution by location for json body
     response = requests.get(
@@ -352,51 +345,44 @@ def test_query_statistics_value_distribution(
             'statisticsvaluedistributionresource',
         ), json={'distribution_by': 'asset'},
     )
-    if start_with_valid_premium:
-        result = assert_proper_sync_response_with_result(response)
-        if db_settings['treat_eth2_as_eth'] is True:
-            assert len(result) == 4
-            totals = {
-                'ETH': get_asset_balance_total(A_ETH, setup) + get_asset_balance_total(A_ETH2, setup),  # noqa: E501
-                'BTC': get_asset_balance_total(A_BTC, setup),
-                'EUR': get_asset_balance_total(A_EUR, setup),
-                A_RDN.identifier: get_asset_balance_total(A_RDN, setup),
-            }
-            for index, entry in enumerate(result):
-                assert len(entry) == 5
-                assert entry['time'] >= start_time
-                assert entry['category'] == 'asset'
-                assert entry['usd_value'] is not None
-                assert FVal(entry['amount']) == totals[entry['asset']]
-                # check that the usd_value is in descending order
-                if index == 0:
-                    continue
-                assert FVal(result[index - 1]['usd_value']) > FVal(entry['usd_value'])
-        else:
-            assert len(result) == 5
-            totals = {
-                'ETH': get_asset_balance_total(A_ETH, setup),
-                'ETH2': get_asset_balance_total(A_ETH2, setup),
-                'BTC': get_asset_balance_total(A_BTC, setup),
-                'EUR': get_asset_balance_total(A_EUR, setup),
-                A_RDN.identifier: get_asset_balance_total(A_RDN, setup),
-            }
-            for index, entry in enumerate(result):
-                assert len(entry) == 5
-                assert entry['time'] >= start_time
-                assert entry['category'] == 'asset'
-                assert entry['usd_value'] is not None
-                assert FVal(entry['amount']) == totals[entry['asset']]
-                # check that the usd_value is in descending order
-                if index == 0:
-                    continue
-                assert FVal(result[index - 1]['usd_value']) > FVal(entry['usd_value'])
+    result = assert_proper_sync_response_with_result(response)
+    if db_settings['treat_eth2_as_eth'] is True:
+        assert len(result) == 4
+        totals = {
+            'ETH': get_asset_balance_total(A_ETH, setup) + get_asset_balance_total(A_ETH2, setup),
+            'BTC': get_asset_balance_total(A_BTC, setup),
+            'EUR': get_asset_balance_total(A_EUR, setup),
+            A_RDN.identifier: get_asset_balance_total(A_RDN, setup),
+        }
+        for index, entry in enumerate(result):
+            assert len(entry) == 5
+            assert entry['time'] >= start_time
+            assert entry['category'] == 'asset'
+            assert entry['usd_value'] is not None
+            assert FVal(entry['amount']) == totals[entry['asset']]
+            # check that the usd_value is in descending order
+            if index == 0:
+                continue
+            assert FVal(result[index - 1]['usd_value']) > FVal(entry['usd_value'])
     else:
-        assert_error_response(
-            response=response,
-            contained_in_msg='logged in user testuser does not have a premium subscription',
-            status_code=HTTPStatus.FORBIDDEN,
-        )
+        assert len(result) == 5
+        totals = {
+            'ETH': get_asset_balance_total(A_ETH, setup),
+            'ETH2': get_asset_balance_total(A_ETH2, setup),
+            'BTC': get_asset_balance_total(A_BTC, setup),
+            'EUR': get_asset_balance_total(A_EUR, setup),
+            A_RDN.identifier: get_asset_balance_total(A_RDN, setup),
+        }
+        for index, entry in enumerate(result):
+            assert len(entry) == 5
+            assert entry['time'] >= start_time
+            assert entry['category'] == 'asset'
+            assert entry['usd_value'] is not None
+            assert FVal(entry['amount']) == totals[entry['asset']]
+            # check that the usd_value is in descending order
+            if index == 0:
+                continue
+            assert FVal(result[index - 1]['usd_value']) > FVal(entry['usd_value'])
 
 
 @pytest.mark.parametrize('start_with_valid_premium', [True])
