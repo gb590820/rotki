@@ -139,8 +139,6 @@ function createFactory(component: string, options?: { loading?: Component; error
   });
 }
 
-export const EthStaking = createFactory('EthStaking');
-
 export const ThemeManager = createFactory('ThemeManager');
 
 interface PremiumComponentsInfo {
