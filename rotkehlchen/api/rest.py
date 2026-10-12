@@ -178,6 +178,7 @@ from rotkehlchen.premium.premium import (
     get_free_capabilities,
     get_user_limit,
     has_premium_capability,
+    has_premium_check,
 )
 from rotkehlchen.serialization.serialize import process_result, process_result_list
 from rotkehlchen.tasks.bridges import (
@@ -1745,9 +1746,7 @@ class RestAPI:
 
     def query_netvalue_data(self, include_nfts: bool) -> Response:
         from_ts = Timestamp(0)
-        premium = self.rotkehlchen.premium
-
-        if premium is None or not premium.is_active():
+        if not has_premium_check(self.rotkehlchen.premium):
             today = datetime.datetime.now(tz=datetime.UTC)
             start_of_day_today = datetime.datetime(today.year, today.month, today.day, tzinfo=datetime.UTC)  # noqa: E501
             from_ts = Timestamp(int((start_of_day_today - datetime.timedelta(days=14)).timestamp()))  # noqa: E501

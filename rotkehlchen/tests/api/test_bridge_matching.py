@@ -779,12 +779,12 @@ def test_match_bridge_transactions_errors(rotkehlchen_api_server: APIServer) -> 
     )
 
 
-def test_match_bridge_transactions_requires_premium(rotkehlchen_api_server: APIServer) -> None:
+def test_match_bridge_transactions_without_premium(rotkehlchen_api_server: APIServer) -> None:
     assert_error_response(
         response=requests.put(
             url=api_url_for(rotkehlchen_api_server, 'matchbridgetransactionsresource'),
             json={'bridge_event': 1, 'matched_events': [2]},
         ),
-        status_code=HTTPStatus.FORBIDDEN,
-        contained_in_msg='does not have a premium subscription',
+        status_code=HTTPStatus.BAD_REQUEST,
+        contained_in_msg='No bridge event found in the DB for identifier 1',
     )

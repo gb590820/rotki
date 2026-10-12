@@ -1683,7 +1683,7 @@ class StatisticsAssetBalanceResource(BaseMethodView):
 
     post_schema = StatisticsAssetBalanceSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -1704,7 +1704,7 @@ class StatisticsValueDistributionResource(BaseMethodView):
 
     get_schema = StatisticsValueDistributionSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(get_schema, location='json_and_query')
     def get(self, distribution_by: str) -> Response:
         return self.rest_api.query_value_distribution_data(
@@ -2377,7 +2377,7 @@ class Eth2StakePerformanceResource(BaseMethodView):
             dbhandler=self.rest_api.rotkehlchen.data.db,
         )
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @resource_parser.use_kwargs(make_put_schema, location='json_and_query')
     def put(
             self,
@@ -2486,7 +2486,7 @@ class LiquityStakingResource(BaseMethodView):
 
     get_schema = AsyncQueryArgumentSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(get_schema, location='json_and_query')
     def get(self, async_query: bool) -> Response:
         return self.rest_api.get_liquity_staked(async_query=async_query)
@@ -2577,7 +2577,7 @@ class LiquityStabilityPoolResource(BaseMethodView):
 
     get_schema = AsyncQueryArgumentSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(get_schema, location='json_and_query')
     def get(self, async_query: bool) -> Response:
         return self.rest_api.get_liquity_stability_pool_positions(async_query=async_query)
@@ -3838,7 +3838,7 @@ class TimestampHistoricalBalanceResource(BaseMethodView):
             known_counterparties={cpt.identifier for cpt in self.rest_api.rotkehlchen.chains_aggregator.get_all_counterparties()},  # noqa: E501
         )
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @resource_parser.use_kwargs(make_post_schema, location='json')
     def post(
             self,
@@ -3861,7 +3861,7 @@ class CurrentHistoricalBalanceResource(BaseMethodView):
             known_counterparties={cpt.identifier for cpt in self.rest_api.rotkehlchen.chains_aggregator.get_all_counterparties()},  # noqa: E501
         )
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @resource_parser.use_kwargs(make_post_schema, location='json')
     def post(
             self,
@@ -3879,7 +3879,7 @@ class CurrentHistoricalBalanceResource(BaseMethodView):
 class HistoricalBalancesAtEventsResource(BaseMethodView):
     post_schema = HistoricalBalancesAtEventsSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(self, async_query: bool, event_identifiers: list[int]) -> Response:
         return self.rest_api.get_historical_balances_at_events(
@@ -3896,7 +3896,7 @@ class HistoricalBalanceSeriesResource(BaseMethodView):
             known_counterparties={cpt.identifier for cpt in self.rest_api.rotkehlchen.chains_aggregator.get_all_counterparties()},  # noqa: E501
         )
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @resource_parser.use_kwargs(make_post_schema, location='json')
     def post(
             self,
@@ -3913,7 +3913,7 @@ class HistoricalAssetAmountsResource(BaseMethodView):
 
     post_schema = StatisticsAssetBalanceSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -3934,7 +3934,7 @@ class HistoricalNetValueResource(BaseMethodView):
 
     post_schema = TimestampRangeSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(self, from_timestamp: Timestamp, to_timestamp: Timestamp) -> Response:
         return self.rest_api.get_historical_netvalue(
@@ -3947,7 +3947,7 @@ class OnchainHistoricalBalanceResource(BaseMethodView):
 
     post_schema = OnchainHistoricalBalanceSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -3970,7 +3970,7 @@ class OnchainHistoricalBalanceDivergenceResource(BaseMethodView):
 
     post_schema = OnchainHistoricalBalanceDivergenceSchema()
 
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -4156,7 +4156,7 @@ class MatchAssetMovementsResource(BaseMethodView):
         return self.rest_api.get_unmatched_asset_movements(only_ignored=only_ignored)
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(put_schema, location='json')
     def put(self, asset_movement: int, matched_events: list[int], external: bool) -> Response:
         return self.rest_api.match_asset_movements(
@@ -4166,7 +4166,7 @@ class MatchAssetMovementsResource(BaseMethodView):
         )
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -4183,7 +4183,7 @@ class MatchAssetMovementsResource(BaseMethodView):
         )
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(delete_schema, location='json')
     def delete(self, identifier: int) -> Response:
         return self.rest_api.unlink_matched_asset_movements(identifier=identifier)
@@ -4202,7 +4202,7 @@ class MatchBridgeTransactionsResource(BaseMethodView):
         return self.rest_api.get_unmatched_bridge_transactions(only_ignored=only_ignored)
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(put_schema, location='json')
     def put(
             self,
@@ -4219,7 +4219,7 @@ class MatchBridgeTransactionsResource(BaseMethodView):
         )
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(post_schema, location='json')
     def post(
             self,
@@ -4236,7 +4236,7 @@ class MatchBridgeTransactionsResource(BaseMethodView):
         )
 
     @require_loggedin_user()
-    @require_premium_user(active_check=False)
+    @require_loggedin_user()
     @use_kwargs(delete_schema, location='json')
     def delete(self, identifier: int) -> Response:
         return self.rest_api.unlink_matched_bridge_transactions(identifier=identifier)
