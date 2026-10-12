@@ -77,8 +77,11 @@ def _get_reports_or_events_maybe_limit(
         entries: list[dict[str, Any]] | list[ProcessedAccountingEvent],
         limit: int,
 ) -> tuple[list[dict[str, Any]] | list[ProcessedAccountingEvent], int, int | None]:
-    returning_entries_length = min(limit, len(entries))
-    return entries[:returning_entries_length], entries_found, entries_total
+    """Cut `entries` down to `limit`. A negative limit means unlimited."""
+    if limit < 0:
+        return entries, entries_found, entries_total
+
+    return entries[:limit], entries_found, entries_total
 
 
 class DBAccountingReports:

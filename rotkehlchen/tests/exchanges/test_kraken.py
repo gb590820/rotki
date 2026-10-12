@@ -37,7 +37,6 @@ from rotkehlchen.constants.assets import (
     A_USDC,
     A_USDT,
 )
-from rotkehlchen.constants.limits import FREE_HISTORY_EVENTS_LIMIT
 from rotkehlchen.constants.resolver import strethaddress_to_identifier
 from rotkehlchen.db.custom_assets import DBCustomAssets
 from rotkehlchen.db.filtering import HistoryEventFilterQuery
@@ -61,6 +60,7 @@ from rotkehlchen.history.events.structures.types import (
     HistoryEventType,
 )
 from rotkehlchen.history.events.utils import create_group_identifier_from_unique_id
+from rotkehlchen.premium.premium import UNLIMITED
 from rotkehlchen.serialization.deserialize import deserialize_timestamp_from_floatstr
 from rotkehlchen.tests.utils.api import (
     api_url_for,
@@ -74,7 +74,6 @@ from rotkehlchen.tests.utils.constants import (
     A_GBP,
     A_LTC,
     A_XRP,
-    TEST_PREMIUM_HISTORY_EVENTS_LIMIT,
 )
 from rotkehlchen.tests.utils.exchanges import (
     get_exchange_asset_symbols,
@@ -1655,10 +1654,7 @@ def test_kraken_staking(rotkehlchen_api_server_with_exchanges, start_with_valid_
     assert events[0]['asset'] == 'XTZ'
     assert events[1]['asset'] == 'ETH2'
     assert events[2]['asset'] == 'ETH'
-    if start_with_valid_premium:
-        assert result['entries_limit'] == TEST_PREMIUM_HISTORY_EVENTS_LIMIT
-    else:
-        assert result['entries_limit'] == FREE_HISTORY_EVENTS_LIMIT
+    assert result['entries_limit'] == UNLIMITED
     assert result['entries_total'] == 4
     assert result['received'] == [
         {'asset': 'XTZ', 'amount': '0.00001', 'value': '0.0000699'},

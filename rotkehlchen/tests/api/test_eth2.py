@@ -428,12 +428,9 @@ def test_query_eth2_inactive(
 @pytest.mark.parametrize('network_mocking', [False])
 @pytest.mark.parametrize('ethereum_accounts', [[]])
 @pytest.mark.parametrize('ethereum_modules', [['eth2']])
-@pytest.mark.parametrize('start_with_valid_premium', [True, False])
+@pytest.mark.parametrize('start_with_valid_premium', [True])
 @pytest.mark.usefixtures('force_beacon_rpc_fallback')
-def test_add_get_edit_delete_eth2_validators(
-        rotkehlchen_api_server: APIServer,
-        start_with_valid_premium: bool,
-) -> None:
+def test_add_get_edit_delete_eth2_validators(rotkehlchen_api_server: APIServer) -> None:
     response = requests.get(
         api_url_for(
             rotkehlchen_api_server,
@@ -487,22 +484,6 @@ def test_add_get_edit_delete_eth2_validators(
             'eth2validatorsresource',
         ), json={'public_key': validators[1].public_key},
     )
-    if start_with_valid_premium is False:
-        assert_error_response(
-            response=response,
-            contained_in_msg='ETH staking limit exceeded. Current staked: 0 ETH, limit: 0 ETH. Would be: 32.002413771 ETH',  # noqa: E501
-            status_code=HTTPStatus.FORBIDDEN,
-        )
-        response = requests.get(
-            api_url_for(
-                rotkehlchen_api_server,
-                'eth2validatorsresource',
-            ),
-        )
-        result = assert_proper_sync_response_with_result(response)
-        assert result == {'entries': [validators[0].serialize()], 'entries_limit': -1, 'entries_found': 1}  # noqa: E501
-        return
-
     assert_simple_ok_response(response)
     response = requests.put(
         api_url_for(
