@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDarkMode } from '@/modules/shell/theme/use-dark-mode';
 import { DARK_COLORS, LIGHT_COLORS } from '@/plugins/theme';
 
-const PREMIUM_DARK: ThemeColors = { accent: '#111111', graph: '#191919', primary: '#222222' };
-const PREMIUM_LIGHT: ThemeColors = { accent: '#333333', graph: '#3a3a3a', primary: '#444444' };
+const CUSTOM_DARK: ThemeColors = { accent: '#111111', graph: '#191919', primary: '#222222' };
+const CUSTOM_LIGHT: ThemeColors = { accent: '#333333', graph: '#3a3a3a', primary: '#444444' };
 
 const mockConfig = ref<Record<string, unknown> | undefined>({ dark: {}, light: {} });
 const mockIsDark = ref<boolean>(false);
 const mockSetThemeConfig = vi.fn();
 const mockSwitchThemeScheme = vi.fn();
-const mockDarkTheme = ref<ThemeColors>(PREMIUM_DARK);
-const mockLightTheme = ref<ThemeColors>(PREMIUM_LIGHT);
-const mockPremium = ref<boolean>(false);
+const mockDarkTheme = ref<ThemeColors>(CUSTOM_DARK);
+const mockLightTheme = ref<ThemeColors>(CUSTOM_LIGHT);
+const mockUnlocked = ref<boolean>(true);
 
 vi.mock('@rotki/ui-library', async importOriginal => ({
   ...await importOriginal<typeof import('@rotki/ui-library')>(),
@@ -32,8 +32,8 @@ vi.mock('@/modules/shell/theme/use-theme-settings', () => ({
   }),
 }));
 
-vi.mock('@/modules/premium/use-subscription', () => ({
-  useSubscription: (): typeof mockPremium => mockPremium,
+vi.mock('@/modules/premium/use-premium', () => ({
+  usePremium: (): typeof mockUnlocked => mockUnlocked,
 }));
 
 describe('useDarkMode', () => {
@@ -41,9 +41,9 @@ describe('useDarkMode', () => {
     vi.clearAllMocks();
     set(mockConfig, { dark: {}, light: {} });
     set(mockIsDark, false);
-    set(mockDarkTheme, PREMIUM_DARK);
-    set(mockLightTheme, PREMIUM_LIGHT);
-    set(mockPremium, false);
+    set(mockDarkTheme, CUSTOM_DARK);
+    set(mockLightTheme, CUSTOM_LIGHT);
+    set(mockUnlocked, true);
     useDarkMode(); // instantiate the shared composable
   });
 
@@ -57,7 +57,8 @@ describe('useDarkMode', () => {
     expect(mockSwitchThemeScheme).toHaveBeenCalledWith(ThemeMode.light);
   });
 
-  it('should use the default colors without a subscription', () => {
+  it('should use the default colors when local features are locked', () => {
+    set(mockUnlocked, false);
     const { usedTheme } = useDarkMode();
     set(mockIsDark, false);
     expect(get(usedTheme)).toStrictEqual(LIGHT_COLORS);
@@ -65,17 +66,15 @@ describe('useDarkMode', () => {
     expect(get(usedTheme)).toStrictEqual(DARK_COLORS);
   });
 
-  it('should use the configured themes with a subscription', () => {
-    set(mockPremium, true);
+  it('should use the configured themes', () => {
     const { usedTheme } = useDarkMode();
     set(mockIsDark, false);
-    expect(get(usedTheme)).toStrictEqual(PREMIUM_LIGHT);
+    expect(get(usedTheme)).toStrictEqual(CUSTOM_LIGHT);
     set(mockIsDark, true);
-    expect(get(usedTheme)).toStrictEqual(PREMIUM_DARK);
+    expect(get(usedTheme)).toStrictEqual(CUSTOM_DARK);
   });
 
-  it('should recompute theme colors when the premium dark theme changes', async () => {
-    set(mockPremium, true);
+  it('should recompute theme colors when the configured dark theme changes', async () => {
     useDarkMode();
     await nextTick();
     mockSetThemeConfig.mockClear();
@@ -90,7 +89,6 @@ describe('useDarkMode', () => {
   });
 
   it('should not push theme config when the base config is missing', async () => {
-    set(mockPremium, true);
     useDarkMode();
     await nextTick();
     set(mockConfig, undefined);
