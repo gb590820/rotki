@@ -498,54 +498,37 @@ describe('mcpServerSetting', () => {
     expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(false);
   });
 
-  it('should tell a premium user their plan is insufficient, with the required tier', async () => {
+  it('should offer working controls even when the capabilities report MCP disabled', async () => {
     grantMcpAccess(false);
 
     const wrapper = createWrapper();
     await flushPromises();
 
-    const gate = wrapper.find('[data-testid="mcp-premium-gate"]');
-    expect(gate.exists()).toBe(true);
-    expect(gate.text()).toContain('backend_settings.settings.mcp_server.premium_plan_title');
-    expect(gate.text()).not.toContain('backend_settings.settings.mcp_server.premium_title');
-    expect(gate.find('.get-premium-placeholder').attributes('data-minimum-tier')).toBe('Basic');
+    expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="mcp-lifecycle"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.find('[data-testid="mcp-auto-start"]').exists()).toBe(true);
   });
 
-  it('should ask a user without a subscription to subscribe', async () => {
+  it('should offer working controls to a user without a subscription', async () => {
     revokePremium();
 
     const wrapper = createWrapper();
     await flushPromises();
 
-    const gate = wrapper.find('[data-testid="mcp-premium-gate"]');
-    expect(gate.exists()).toBe(true);
-    expect(gate.text()).toContain('backend_settings.settings.mcp_server.premium_title');
-    expect(gate.text()).not.toContain('backend_settings.settings.mcp_server.premium_plan_title');
-    // no capabilities are fetched without a subscription, so there is no tier to name
-    expect(gate.text()).toContain('backend_settings.settings.mcp_server.premium_description');
+    expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="mcp-lifecycle"]').attributes('disabled')).toBeUndefined();
   });
 
-  it('should hide the lifecycle controls when MCP is locked', async () => {
-    grantMcpAccess(false);
-
-    const wrapper = createWrapper();
-    await flushPromises();
-
-    expect(wrapper.find('[data-testid="mcp-lifecycle"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="mcp-auto-start"]').exists()).toBe(false);
-  });
-
-  it('should hide token generation in Docker when MCP is locked', async () => {
+  it('should offer token generation in Docker to a user without a subscription', async () => {
     vi.stubEnv('VITE_DOCKER', 'true');
     mocks.isPackaged = false;
-    grantMcpAccess(false);
+    revokePremium();
 
     const wrapper = createWrapper();
     await flushPromises();
 
-    expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="mcp-generate-token"]').exists()).toBe(false);
-    expect(wrapper.text()).not.toContain('backend_settings.settings.mcp_server.docker_description');
+    expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="mcp-generate-token"]').exists()).toBe(true);
   });
 
   it('should show the desktop-only message instead of the gate in the web build', async () => {
@@ -559,19 +542,5 @@ describe('mcpServerSetting', () => {
     // there is no server to run here for anyone, so the answer is "not here", not "buy premium"
     expect(wrapper.text()).toContain('backend_settings.settings.mcp_server.desktop_only');
     expect(wrapper.find('[data-testid="mcp-premium-gate"]').exists()).toBe(false);
-  });
-
-  it('should reveal working controls once capabilities unlock MCP after mount', async () => {
-    grantMcpAccess(false);
-
-    const wrapper = createWrapper();
-    await flushPromises();
-    expect(wrapper.find('[data-testid="mcp-lifecycle"]').exists()).toBe(false);
-
-    grantMcpAccess(true);
-    await flushPromises();
-
-    expect(wrapper.find('[data-testid="mcp-lifecycle"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="mcp-lifecycle"]').attributes('disabled')).toBeUndefined();
   });
 });
