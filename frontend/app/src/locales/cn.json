@@ -6245,7 +6245,6 @@
   "task_manager": {
     "error": "处理任务 [{taskId}]“{title}”时出错：{error}"
   },
-  "theme_manager_lock": "你当前的套餐不包含主题管理器",
   "theme_switch": {
     "auto": "自动（检测设备主题）",
     "dark": "深色",

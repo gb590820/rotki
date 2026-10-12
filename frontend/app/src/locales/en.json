@@ -5350,8 +5350,11 @@
       "visible_percentage": "% of visible items only:"
     },
     "theme_manager": {
+      "accent": "Accent color",
       "dark_theme": "Dark Theme",
+      "graph": "Graph color",
       "light_theme": "Light Theme",
+      "primary": "Primary color",
       "reset": {
         "default": "Reset to the default application color",
         "short": "Reset to default"
@@ -6384,7 +6387,6 @@
   "task_manager": {
     "error": "An error occurred while processing task [{taskId}] '{title}': {error}"
   },
-  "theme_manager_lock": "The theme manager is not available on your current plan",
   "theme_switch": {
     "auto": "Auto (Detect Device Theme)",
     "dark": "Dark",

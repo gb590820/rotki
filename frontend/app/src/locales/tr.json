@@ -6383,7 +6383,6 @@
   "task_manager": {
     "error": "[{taskId}] '{title}' görevi işlenirken bir hata oluştu: {error}"
   },
-  "theme_manager_lock": "Tema yöneticisi mevcut planınızda kullanılamıyor",
   "theme_switch": {
     "auto": "Otomatik (cihaz temasını algıla)",
     "dark": "Koyu",

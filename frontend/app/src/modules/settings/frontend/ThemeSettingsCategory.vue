@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ThemeManager } from '@/modules/premium/premium';
-import { useSubscription } from '@/modules/premium/use-subscription';
 import SettingsItem from '@/modules/settings/controls/SettingsItem.vue';
 import SettingCategory from '@/modules/settings/SettingCategory.vue';
-import ThemeManagerPlaceholder from '@/modules/shell/theme/ThemeManagerPlaceholder.vue';
+import ThemeManager from '@/modules/shell/theme/ThemeManager.vue';
 
 const { t } = useI18n({ useScope: 'global' });
-const subscribed = useSubscription();
 </script>
 
 <template>
@@ -18,14 +15,7 @@ const subscribed = useSubscription();
       {{ t('premium_components.theme_manager.text_hint') }}
     </template>
     <SettingsItem>
-      <ThemeManager
-        v-if="subscribed"
-        class="pt-4 "
-      />
-      <ThemeManagerPlaceholder
-        v-else
-        class="pt-4"
-      />
+      <ThemeManager class="pt-4" />
     </SettingsItem>
   </SettingCategory>
 </template>
