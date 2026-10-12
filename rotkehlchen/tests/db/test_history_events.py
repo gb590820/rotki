@@ -2,7 +2,7 @@ import json
 import time
 from contextlib import suppress
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 from unittest.mock import patch
 
 import pytest
@@ -16,7 +16,6 @@ from rotkehlchen.chain.evm.decoding.oneinch.constants import CPT_ONEINCH_V6
 from rotkehlchen.chain.evm.types import string_to_evm_address
 from rotkehlchen.constants import ONE
 from rotkehlchen.constants.assets import A_BCH, A_BTC, A_DAI, A_ETH, A_USDC, A_USDT, A_WBTC
-from rotkehlchen.constants.limits import FREE_HISTORY_EVENTS_LIMIT
 from rotkehlchen.constants.misc import ZERO
 from rotkehlchen.db.bitcointx import DBBitcoinTx
 from rotkehlchen.db.cache import DBCacheStatic
@@ -62,6 +61,9 @@ from rotkehlchen.types import (
     TimestampMS,
     deserialize_evm_tx_hash,
 )
+
+# An arbitrary entries limit, to exercise the DB layer's limited queries
+ENTRIES_LIMIT: Final = 1000
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -520,7 +522,7 @@ def test_history_events_count_with_eth_withdrawal_filters(database: DBHandler) -
 
 
 @pytest.mark.parametrize(
-    ('entries_limit', 'aggregate_by_group_ids'), [(None, False), (None, True), (FREE_HISTORY_EVENTS_LIMIT, False), (FREE_HISTORY_EVENTS_LIMIT, True)],  # noqa: E501
+    ('entries_limit', 'aggregate_by_group_ids'), [(None, False), (None, True), (ENTRIES_LIMIT, False), (ENTRIES_LIMIT, True)],  # noqa: E501
 )
 def test_read_write_customized_events_from_db(database: DBHandler, entries_limit: int, aggregate_by_group_ids: bool) -> None:  # noqa: E501
     """Tests filtering for fetching only the customized events"""
@@ -805,7 +807,7 @@ def test_get_history_events_free_filter(database: DBHandler):
                 aggregate_by_group_ids=False,
             ) != []
 
-        with patch(target='rotkehlchen.tests.db.test_history_events.FREE_HISTORY_EVENTS_LIMIT', new=3):  # noqa: E501
+        with patch(target='rotkehlchen.tests.db.test_history_events.ENTRIES_LIMIT', new=3):
             for filters in (  # trying different filters with some combinations
                 HistoryEventFilterQuery.make(event_subtypes=[HistoryEventSubType.NONE]),
                 HistoryEventFilterQuery.make(assets=(A_ETH, A_USDT)),
@@ -822,7 +824,7 @@ def test_get_history_events_free_filter(database: DBHandler):
                 free_grouped_result = history_events.get_history_events(
                     cursor=cursor,
                     filter_query=filters,
-                    entries_limit=FREE_HISTORY_EVENTS_LIMIT,
+                    entries_limit=ENTRIES_LIMIT,
                     aggregate_by_group_ids=True,
                 )
                 assert len(free_grouped_result) == min(3, len(premium_grouped_result))
@@ -836,7 +838,7 @@ def test_get_history_events_free_filter(database: DBHandler):
                 free_result = history_events.get_history_events(
                     cursor=cursor,
                     filter_query=filters,
-                    entries_limit=FREE_HISTORY_EVENTS_LIMIT,
+                    entries_limit=ENTRIES_LIMIT,
                     aggregate_by_group_ids=False,
                 )
                 for free_event in free_result:
@@ -976,7 +978,7 @@ def test_match_exact_events(database: DBHandler, start_with_valid_premium: bool)
     """
     db = DBHistoryEvents(database)
     timestamp, account = TimestampMS(0), make_evm_address()
-    entries_limit = None if start_with_valid_premium else FREE_HISTORY_EVENTS_LIMIT
+    entries_limit = None if start_with_valid_premium else ENTRIES_LIMIT
     with database.user_write() as write_cursor:
         db.add_history_events(
             write_cursor=write_cursor,

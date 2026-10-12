@@ -25,6 +25,7 @@ from rotkehlchen.history.events.structures.types import (
     HistoryEventSubType,
     HistoryEventType,
 )
+from rotkehlchen.history.price import PriceHistorian
 from rotkehlchen.tests.utils.api import (
     api_url_for,
     assert_error_response,
@@ -290,16 +291,18 @@ def test_history_export_csv_errors(
     )
 
 
-@pytest.mark.vcr(filter_query_parameters=['api_key'])
 @pytest.mark.parametrize('start_with_valid_premium', [True, False])
 @pytest.mark.parametrize('default_mock_price_value', [ONE])
 @pytest.mark.freeze_time('2025-04-30')
-def test_history_export_csv_free_limit(
+def test_history_export_csv_has_no_limit(
         rotkehlchen_api_server_with_exchanges: APIServer,
         start_with_valid_premium: bool,
         tmpdir_factory: Any,
 ) -> None:
-    """Test that the free history events limit is respected."""
+    """Test that the export contains every event, with or without a subscription.
+
+    Prices are mocked out since only the number of exported rows is checked.
+    """
     database = rotkehlchen_api_server_with_exchanges.rest_api.rotkehlchen.data.db
     history_events = DBHistoryEvents(database=database)
     group_identifiers = [str(make_evm_tx_hash()) for _ in range(3)]
@@ -341,7 +344,7 @@ def test_history_export_csv_free_limit(
         )
 
     csv_dir = Path(tmpdir_factory.mktemp('test_csv_dir'))
-    with patch(target='rotkehlchen.premium.premium.FREE_HISTORY_EVENTS_LIMIT', new=1):
+    with patch.object(PriceHistorian, 'query_multiple_prices', return_value={}):
         response = requests.post(api_url_for(
             rotkehlchen_api_server_with_exchanges,
             'exporthistoryeventresource',
@@ -350,7 +353,7 @@ def test_history_export_csv_free_limit(
         assert_csv_export_response(
             response=response,
             csv_path=csv_dir / 'historyevents_until_20250430.csv',
-            expected_count=3 if start_with_valid_premium else 1,
+            expected_count=3,
             includes_extra_headers=False,
         )
 
@@ -363,7 +366,7 @@ def test_history_export_csv_free_limit(
         assert_csv_export_response(
             response=response,
             csv_path=csv_dir / 'historyevents_20240309_to_20250430.csv',
-            expected_count=2 if start_with_valid_premium else 1,
+            expected_count=2,
             includes_extra_headers=False,
         )
 
@@ -378,7 +381,7 @@ def test_history_export_csv_free_limit(
         assert_csv_export_response(
             response=response,
             csv_path=csv_dir / 'historyevents_until_20250430_types_trade-transfer_subtypes_none.csv',  # noqa: E501
-            expected_count=3 if start_with_valid_premium else 1,
+            expected_count=3,
             includes_extra_headers=False,
         )
 

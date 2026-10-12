@@ -23,7 +23,13 @@ from rotkehlchen.history.events.structures.base import HistoryBaseEntryType
 from rotkehlchen.history.events.structures.eth2 import EthBlockEvent
 from rotkehlchen.history.events.structures.types import HistoryEventSubType, HistoryEventType
 from rotkehlchen.logging import RotkehlchenLogsAdapter
-from rotkehlchen.premium.premium import Premium, UserLimitType, get_user_limit, has_premium_check
+from rotkehlchen.premium.premium import (
+    UNLIMITED,
+    Premium,
+    UserLimitType,
+    get_user_limit,
+    has_premium_check,
+)
 from rotkehlchen.serialization.deserialize import (
     deserialize_evm_address,
     deserialize_fval,
@@ -161,11 +167,13 @@ class Eth2(EthereumModule):
         if validator_balance == ZERO and ownership_proportion == ZERO:
             return
 
+        limit, _ = get_user_limit(self.premium, UserLimitType.ETH_STAKED)
+        if limit == UNLIMITED:  # skip querying the staked total when nothing caps it
+            return
+
         current_staked = self._get_total_eth_staked()
         additional_stake = validator_balance * ownership_proportion
         new_total = current_staked + additional_stake
-
-        limit, _ = get_user_limit(self.premium, UserLimitType.ETH_STAKED)
 
         if new_total > limit:
             raise PremiumPermissionError(

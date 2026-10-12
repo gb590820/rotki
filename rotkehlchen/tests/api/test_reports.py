@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 import pytest
 import requests
 
-from rotkehlchen.accounting.constants import FREE_PNL_EVENTS_LIMIT
 from rotkehlchen.accounting.mixins.event import AccountingEventType
 from rotkehlchen.accounting.pnl import PNL
 from rotkehlchen.accounting.structures.processed_event import ProcessedAccountingEvent
@@ -13,12 +12,13 @@ from rotkehlchen.constants.assets import A_DAI, A_ETH
 from rotkehlchen.db.reports import DBAccountingReports
 from rotkehlchen.db.settings import DBSettings
 from rotkehlchen.fval import FVal
+from rotkehlchen.premium.premium import UNLIMITED
 from rotkehlchen.tests.utils.api import (
     api_url_for,
     assert_error_response,
     assert_proper_response,
 )
-from rotkehlchen.tests.utils.constants import A_GBP, TEST_PREMIUM_PNL_EVENTS_LIMIT
+from rotkehlchen.tests.utils.constants import A_GBP
 from rotkehlchen.types import Location, Price, Timestamp
 from rotkehlchen.utils.misc import timestamp_to_date
 
@@ -123,7 +123,7 @@ def test_get_report_data_with_premium(
     assert len(data['result']['entries']) == len(events)
     assert data['result']['entries_found'] == len(events)
     assert data['result']['entries_total'] == len(events)
-    assert data['result']['entries_limit'] == TEST_PREMIUM_PNL_EVENTS_LIMIT if start_with_valid_premium else FREE_PNL_EVENTS_LIMIT  # noqa: E501
+    assert data['result']['entries_limit'] == UNLIMITED
 
     # Test pagination limits
     response = requests.post(
@@ -135,7 +135,7 @@ def test_get_report_data_with_premium(
     assert len(data['result']['entries']) == 1
     assert data['result']['entries_found'] == len(events)
     assert data['result']['entries_total'] == len(events)
-    assert data['result']['entries_limit'] == TEST_PREMIUM_PNL_EVENTS_LIMIT if start_with_valid_premium else FREE_PNL_EVENTS_LIMIT  # noqa: E501
+    assert data['result']['entries_limit'] == UNLIMITED
 
 
 def test_get_report_data_invalid_report(
