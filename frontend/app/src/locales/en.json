@@ -5335,6 +5335,7 @@
       "negative_amount_detected": "Negative amount detected during historical processing.",
       "netvalue_over_time": "Netvalue over time",
       "no_balance_snapshot_data_available": "No balance snapshot data available.",
+      "others": "Others",
       "range_selector": {
         "data_available": "Data available",
         "ending_date_must_before_starting_date": "The ending date cannot be earlier than the starting date.",
